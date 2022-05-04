@@ -3,35 +3,41 @@ import os
 import sys
 import os
 import pyshark
+import clienthello as ch
+import serverhello as sh
 
-#cap = pyshark.FileCapture(
-#    'google.pcap', use_json=True, include_raw=True,
-#    override_prefs={'ssl.keylog_file': os.path.abspath('sslkeys_google.log')},
-#    debug=True)
-
-
-#Requires
-#sudo apt install tshark
-#sudo pip3 install pyshark
-
-def parseClientHello(pkt):
-    pass
-
-def parseServerHello(pkt):
-    pass
 
 def readCaptureFile(filename):
-    count = 0
-    chelloNumber = 0
+    clntpkts = []
+    srvrpkts = []    
     cap = pyshark.FileCapture(filename,display_filter="tls")
     for pkt in cap:
-        count = count + 1
-        if "Client Hello" in str(pkt.tls):
-            chelloNumber = chelloNumber + 1
+        if "Client Hello" in str(pkt.tls):    
+            clntpkts.append(ch.parseClientHello(pkt))
         if "Server Hello" in str(pkt.tls):        
-            print(pkt.tls)
+            srvrpkts.append(sh.parseServerHello(pkt))
 
-    print("Number of TLS Client Hello Packets:"+str(chelloNumber))
+    return clntpkts,srvrpkts
+
+
+def printStats(clientpkts,serverpkts):
+    handshakes = []
+    for l in clientpkts:
+        pass
+    for l in serverpkts:
+        pass
+
+    i = 0
+    for h in handshakes:
+        print("Cost statistics handshake "+ str(++i))
+        print("KEX algorithm | KEX size (bytes) | CHELLO size (bytes) | SHELLO size (bytes)")
+
+        print("Auth algorithm | Auth size (bytes) | Handshake Signature size (bytes) | Server-cert size (bytes) | Cert-chain size (bytes)")
+
+    print("Summary: Handshake number | Total Size (bytes)")
+
+    print("Full cost: " + " bytes.")
+
  
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PCAP Pyshark reader')
@@ -43,5 +49,6 @@ if __name__ == '__main__':
     if not os.path.isfile(filename):
         print('"{}" does not exist.'.format(filename), file=sys.stderr)
     else:
-        readCaptureFile(filename)
+        clientpkts, serverpkts = readCaptureFile(filename)
+        printStats(clientpkts, serverpkts)
 
