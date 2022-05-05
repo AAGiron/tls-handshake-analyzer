@@ -18,7 +18,6 @@ def parseServerHello(pkt):
 	 pkt.length, pkt.frame_info.cap_len,
 	 pkt.frame_info.time, pkt.frame_info.time_epoch])
 	"""
-
 	resultSH = []
 	resultSH.extend([pkt.tls.handshake_extensions_key_share_group,
 			pkt.tls.handshake_extensions_key_share_key_exchange_length,

@@ -39,20 +39,21 @@ def getHandshakes(clientpkts,serverpkts,countpkts, authpkts):
         print("Warning: different number of client/server handshake packets. Check your pcap file.")
     
     for i in range(int(countpkts/2)):
-        clntGroup = int(clientpkts[i][0][0])
         srvGroup = int(serverpkts[i][0][0])
-        if clntGroup != srvGroup:
-            print("Error: Catch ya later, Wrong (KEX) group dudes! ( "+str() + "and " + str() + ").")
+        clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
+
+        if clntGroup == -1:
+            print("Error: Catch ya later, Wrong (KEX) group dudes! (Client:"+str(clntGroup) + " and server:" + str(srvGroup) + ").")
             return []
         #KEX data
-        KEXsize = int(clientpkts[i][0][2])+int(serverpkts[i][0][1])
+        KEXsize = int(keyshareSize)+int(serverpkts[i][0][1])
         CHelloSize = int(clientpkts[i][0][-1])
         SHelloSize = int(serverpkts[i][0][-1])
         hsTotalSize = int(clientpkts[i][1][2])+int(serverpkts[i][1][2])    #+auth messages?
         hsCapTotalSize = int(clientpkts[i][1][3])+int(serverpkts[i][1][3])    #+auth messages?
         
         #Auth data (only if keys are provided)
-        if len(authpkts) > 0:
+        if not authpkts:
             pass
 
         #result
@@ -123,7 +124,7 @@ if __name__ == '__main__':
             #get randoms from client packets
             randoms =  tlsdec.extract_client_randoms(clientpkts)
             allkeys = tlsdec.read_key_log_file(args.tlskey)
-            nsessions, keys = tlsdec.filter_keys(all_keys, rands)
-            authpkts = tlsdec.decryptHandshakeServerAuth(nsessions,keys,filename)
+            nsessions, keys = tlsdec.filter_keys(allkeys, randoms)
+            authpkts = tlsdec.decryptHandshakeServerAuth(nsessions,keys,filename)            
         printStats(getHandshakes(clientpkts,serverpkts,countpkts,authpkts))
     print("End of processing.")
