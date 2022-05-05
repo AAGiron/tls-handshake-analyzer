@@ -5,11 +5,11 @@ import os
 import pyshark
 import clienthello as ch
 import serverhello as sh
-
+import tlsdecryptor as tlsdec
 
 def readCaptureFile(filename):
     """
-    Function that opens a capture file and start processing packets
+    Function that opens a capture file and start processing handshake (unencrypted) packets
     Returns two lists, one for the client packets and the other for the server
     """
     clntpkts = []
@@ -22,11 +22,11 @@ def readCaptureFile(filename):
             countpkts = countpkts + 1
         if "Server Hello" in str(pkt.tls):        
             srvrpkts.append(sh.parseServerHello(pkt))
-            countpkts = countpkts + 1
+            countpkts = countpkts + 1            
 
     return clntpkts,srvrpkts, countpkts
 
-def getHandshakes(clientpkts,serverpkts,countpkts):
+def getHandshakes(clientpkts,serverpkts,countpkts, authpkts):
     """
     After parsing packets, it arranges them into pairs (ch-sh)
     for reporting purposes. Result:
@@ -50,7 +50,10 @@ def getHandshakes(clientpkts,serverpkts,countpkts):
         SHelloSize = int(serverpkts[i][0][-1])
         hsTotalSize = int(clientpkts[i][1][2])+int(serverpkts[i][1][2])    #+auth messages?
         hsCapTotalSize = int(clientpkts[i][1][3])+int(serverpkts[i][1][3])    #+auth messages?
-        #Auth data
+        
+        #Auth data (only if keys are provided)
+        if len(authpkts) > 0:
+            pass
 
         #result
         handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,hsCapTotalSize])    
@@ -100,15 +103,27 @@ if __name__ == '__main__':
 /_/ /_____/____/  /_/ /_/\__,_/_/ /_/\__,_/____/_/ /_/\__,_/_/|_|\___/  /_/  |_/_/ /_/\__,_/_/\__, / /___/\___/_/     
                                                                                              /____/                   
   """)
+    ### Flags
     parser = argparse.ArgumentParser(description='PCAP Pyshark reader')
     parser.add_argument('--pcap', metavar='<pcap capture file>',
                         help='pcap file to parse', required=True)
+    parser.add_argument('--tlskey', metavar='<tls key log file>',
+                        help='key log file to decrypt tls messages', required=False)
     args = parser.parse_args()
     
     filename = args.pcap
     if not os.path.isfile(filename):
         print('"{}" does not exist.'.format(filename), file=sys.stderr)
-    else:
+    else:        
+        #start with public parts of the handshake
         clientpkts, serverpkts, countpkts = readCaptureFile(filename)
-        printStats(getHandshakes(clientpkts,serverpkts,countpkts))
+        authpkts = []
+        # check for keys
+        if args.tlskey is not None:
+            #get randoms from client packets
+            randoms =  tlsdec.extract_client_randoms(clientpkts)
+            allkeys = tlsdec.read_key_log_file(args.tlskey)
+            nsessions, keys = tlsdec.filter_keys(all_keys, rands)
+            authpkts = tlsdec.decryptHandshakeServerAuth(nsessions,keys,filename)
+        printStats(getHandshakes(clientpkts,serverpkts,countpkts,authpkts))
     print("End of processing.")
