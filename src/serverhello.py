@@ -16,7 +16,7 @@ def parseServerHello(pkt):
 	Result for packet data: 
 	[pkt.ip.src, pkt.tcp.port,
 	 pkt.length, pkt.frame_info.cap_len,
-	 pkt.frame_info.time, pkt.frame_info.time_epoch])
+	 pkt.frame_info.time, pkt.frame_info.time_epoch, pkt.tls.handshake_ciphersuite])
 	"""
 	resultSH = []
 	resultSH.extend([pkt.tls.handshake_extensions_key_share_group,
@@ -26,6 +26,6 @@ def parseServerHello(pkt):
 	additionalResult = []
 	additionalResult.extend([pkt.ip.src, pkt.tcp.port,
 					pkt.length, pkt.frame_info.cap_len,
-					pkt.frame_info.time, pkt.frame_info.time_epoch])
+					pkt.frame_info.time, pkt.frame_info.time_epoch, pkt.tls.handshake_ciphersuite])
 	return resultSH,additionalResult
 

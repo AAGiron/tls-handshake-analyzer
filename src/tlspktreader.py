@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import os
 import pyshark
 import clienthello as ch
 import serverhello as sh
@@ -24,6 +23,7 @@ def readCaptureFile(filename):
             srvrpkts.append(sh.parseServerHello(pkt))
             countpkts = countpkts + 1            
 
+    cap.close()
     return clntpkts,srvrpkts, countpkts
 
 def getHandshakes(clientpkts,serverpkts,countpkts, authpkts):
@@ -123,8 +123,9 @@ if __name__ == '__main__':
         if args.tlskey is not None:
             #get randoms from client packets
             randoms =  tlsdec.extract_client_randoms(clientpkts)
-            allkeys = tlsdec.read_key_log_file(args.tlskey)
-            nsessions, keys = tlsdec.filter_keys(allkeys, randoms)
-            authpkts = tlsdec.decryptHandshakeServerAuth(nsessions,keys,filename)            
+            #get negotiated ciphersuite from server packet 
+            ciphersuites = tlsdec.extractCiphersuite(serverpkts)
+            allkeys = tlsdec.read_key_log_file(args.tlskey)                
+            authpkts = tlsdec.decryptHandshakeServerAuth(allkeys,randoms,ciphersuites,filename)            
         printStats(getHandshakes(clientpkts,serverpkts,countpkts,authpkts))
     print("End of processing.")
