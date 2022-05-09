@@ -5,6 +5,7 @@ import tempfile
 import pyshark
 import authentication as auth
 import hkdfutils as hu
+import symmetric as sym
 
 """
 	Purpose: read a SSL_KEY_LOG_FILE, extract keys, decrypt TLS 1.3 handshake messages
@@ -86,14 +87,10 @@ def decryptHandshakeServerAuth(allsecrets,randoms,csuites, filename):
         #2.2 [sender]_write_key = HKDF-Expand-Label(Secret, "key", "", key_length)
         #2.3 [sender]_write_iv  = HKDF-Expand-Label(Secret, "iv", "", iv_length)
     
-    client_hs_write_keys = []
-    client_hs_write_ivs = []
-    server_hs_write_keys = []
-    server_hs_write_ivs = []
-    client_write_keys = []
-    client_write_ivs = []
-    server_write_keys = []
-    server_write_ivs = []
+    client_hs_write_keys_bundle = []    
+    server_hs_write_keys_bundle = []    
+    client_write_keys_bundle = []    
+    server_write_keys_bundle = []    
     for i in range(nsessions):
         l = hu.getCSuiteLength(i,csuites)
         if l == -1:
@@ -101,33 +98,50 @@ def decryptHandshakeServerAuth(allsecrets,randoms,csuites, filename):
             return []        
 
         #include mode here
-        client_hs_write_keys.append(hu.getSenderMaterial("handshake",secrets,"client","key",i,l))
-        client_hs_write_ivs.append(hu.getSenderMaterial("handshake",secrets,"client","iv",i,l))
-        server_hs_write_keys.append(hu.getSenderMaterial("handshake",secrets,"server","key",i,l))
-        server_hs_write_ivs.append(hu.getSenderMaterial("handshake",secrets,"server","iv",i,l))
+        client_hs_write_keys_bundle.append([hu.getSenderMaterial("handshake",secrets,"client","key",i,l),
+                                           hu.getSenderMaterial("handshake",secrets,"client","iv",i,l)])
+        server_hs_write_keys_bundle.append([hu.getSenderMaterial("handshake",secrets,"server","key",i,l),
+                                            hu.getSenderMaterial("handshake",secrets,"server","iv",i,l)])        
 
-        client_write_keys.append(hu.getSenderMaterial("traffic",secrets,"client","key",i,l))
-        client_write_ivs.append(hu.getSenderMaterial("traffic",secrets,"client","iv",i,l))
-        server_write_keys.append(hu.getSenderMaterial("traffic",secrets,"server","key",i,l))
-        server_write_ivs.append(hu.getSenderMaterial("traffic",secrets,"server","iv",i,l))
+        client_write_keys_bundle.append([hu.getSenderMaterial("traffic",secrets,"client","key",i,l),
+                                        hu.getSenderMaterial("traffic",secrets,"client","iv",i,l)])        
+        server_write_keys_bundle.append([hu.getSenderMaterial("traffic",secrets,"server","key",i,l),
+                                  hu.getSenderMaterial("traffic",secrets,"server","iv",i,l)])        
 
         #print(client_hs_write_keys[0].hex(),server_hs_write_keys[0].hex())
 
+    #all keys and ivs
+    keybigbundle = [client_hs_write_keys_bundle,server_hs_write_keys_bundle,
+                     client_write_keys_bundle,server_write_keys_bundle]
 
     #2. Read capture file again (get application data and symmetric algo. used)
+    decryptedpkts = []
     cap = pyshark.FileCapture(filename,display_filter="tls") 
-    #for pkt in cap:  
-        #if "Application Data" in str(pkt.tls):
+    for pkt in cap:  
+        if "Application Data" in str(pkt.tls):
+            #3. Dummy (but quick) approach: try decrypting (Success:parse pkt; Failure:keep going)
+            appdata = pkt.tls.app_data
+            length = len(appdata)
+            
+            #could do this better
+            decrypted = None
+            verify = False
+            
+            decrypted, verify = sym.decryptData(csuites, keybigbundle, appdata,length)
+
+            if verify:
+                print("\t\t\t DECRYPT! :D")
+
             #print(pkt.tls.field_names)
             #print(pkt.tls.record_length)
-            #print(pkt.length)
-
+            #print(pkt.length)            
+            decryptedpkts.append(decrypted)
             #ch.parseClientHello(pkt)
 
-	#3. Dummy (but quick) approach: try decrypting (Success:parse pkt; Failure:keep going)
+	
 
     cap.close()
-    return []
+    return decryptedpkts
 """
 ['record', 'record_content_type', 'record_version', 'record_length', 'handshake', '
 handshake_type', 'handshake_length', 'handshake_version', 'handshake_random', 

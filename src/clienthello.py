@@ -3,10 +3,6 @@ import sys
 import os
 import pyshark
 
-
-
-
-
 ## Entry point
 def parseClientHello(pkt):
 	"""
