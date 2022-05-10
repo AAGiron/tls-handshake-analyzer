@@ -116,29 +116,34 @@ def decryptHandshakeServerAuth(allsecrets,randoms,csuites, filename):
 
     #2. Read capture file again (get application data and symmetric algo. used)
     decryptedpkts = []
+    sequenceNumber = 0 
     cap = pyshark.FileCapture(filename,display_filter="tls") 
     for pkt in cap:  
         if "Application Data" in str(pkt.tls):
             #3. Dummy (but quick) approach: try decrypting (Success:parse pkt; Failure:keep going)
             appdata = pkt.tls.app_data
             length = len(appdata)
-            
+            opaqueType = pkt.tls.record_opaque_type
+            recordLength = pkt.tls.record_length
+            version = pkt.tls.record_version
+            pktinfo = [version,opaqueType,sequenceNumber,recordLength]
+
             #could do this better
             decrypted = None
             verify = False
             
-            decrypted, verify = sym.decryptData(csuites, keybigbundle, appdata,length)
+            decrypted, verify = sym.decryptData(csuites, keybigbundle, appdata,length,pktinfo)
 
             if verify:
                 print("\t\t\t DECRYPT! :D")
 
+            
             #print(pkt.tls.field_names)
-            #print(pkt.tls.record_length)
             #print(pkt.length)            
             decryptedpkts.append(decrypted)
             #ch.parseClientHello(pkt)
-
-	
+            sequenceNumber = sequenceNumber + 1 #assuming correct capture ordering
+	   
 
     cap.close()
     return decryptedpkts
