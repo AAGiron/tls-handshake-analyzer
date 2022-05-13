@@ -74,7 +74,7 @@ def extractCiphersuite(serverpkts):
     return csuites
 
 
-def decryptHandshakeServerAuth(allsecrets,randoms,csuites, filename):
+def decryptHandshakeServerAuth(countpkts, allsecrets,randoms,csuites, filename):
     """
         Given keys and capture file, now get the handshake encrypted packets and decrypt them
         returns the sizes plus decrypted data (Certificate, CertificateVerify)
@@ -116,35 +116,43 @@ def decryptHandshakeServerAuth(allsecrets,randoms,csuites, filename):
 
     #2. Read capture file again (get application data and symmetric algo. used)
     decryptedpkts = []
-    sequenceNumber = 0 
     cap = pyshark.FileCapture(filename,display_filter="tls") 
+
     for pkt in cap:  
+        #print(pkt.tls)
         if "Application Data" in str(pkt.tls):
             #3. Dummy (but quick) approach: try decrypting (Success:parse pkt; Failure:keep going)
-            appdata = pkt.tls.app_data
+            appdata = pkt.tls.app_data.raw_value
             length = len(appdata)
             opaqueType = pkt.tls.record_opaque_type
             recordLength = pkt.tls.record_length
             version = pkt.tls.record_version
-            pktinfo = [version,opaqueType,sequenceNumber,recordLength]
+            
+           # print(pkt.tls.app_data.raw_value)
+
 
             #could do this better
             decrypted = None
             verify = False
             
-            decrypted, verify = sym.decryptData(csuites, keybigbundle, appdata,length,pktinfo)
+            #It seems that pyshark does not provide tls 1.3 sequence numbers, so we try them
+            #This approach tries to solve the out-of-order capture problem
+            for i in range (countpkts+1):
+                #print("seq-number:"+str(i)+" attempt...")
+                #print(appdata)
+                pktinfo = [version,opaqueType,i,recordLength]
+                #print(pktinfo)
+                decrypted, verify = sym.decryptData(csuites, keybigbundle, appdata,length,pktinfo)
 
-            if verify:
-                print("\t\t\t DECRYPT! :D")
+                if verify:
+                    print("\t\t\t DECRYPT! :D")
 
             
             #print(pkt.tls.field_names)
             #print(pkt.length)            
-            decryptedpkts.append(decrypted)
+                decryptedpkts.append(decrypted)
             #ch.parseClientHello(pkt)
-            sequenceNumber = sequenceNumber + 1 #assuming correct capture ordering
-	   
-
+    
     cap.close()
     return decryptedpkts
 """

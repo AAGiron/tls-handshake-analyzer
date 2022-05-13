@@ -36,10 +36,11 @@ def HKDFexpand(secret, materialtype,l):
 		Fixed sha256 but we could get from the negotiation packets
 	"""
 	#info = b"hkdf-example" bytes.fromhex(materialtype)
+	label = "tls13 " + materialtype
 	hkdf = HKDFExpand(algorithm=hashes.SHA256(),
 				length=l,
 				#salt=materialtype, no salt in this class
-				info=materialtype.encode('utf-8'),
+				info=label.encode('utf-8'),
 	)
 	return hkdf.derive(secret.encode('utf-8'))
 	#probably we will need            opaque label<7..255> = "tls13 " + Label;

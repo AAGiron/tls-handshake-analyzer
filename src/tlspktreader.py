@@ -14,19 +14,21 @@ def readCaptureFile(filename):
     clntpkts = []
     srvrpkts = []
     countpkts = 0    
+    counths = 0
     cap = pyshark.FileCapture(filename,display_filter="tls")
     for pkt in cap:        
         if "Client Hello" in str(pkt.tls):           
             clntpkts.append(ch.parseClientHello(pkt))
-            countpkts = countpkts + 1
+            counths = counths + 1
         if "Server Hello" in str(pkt.tls):        
             srvrpkts.append(sh.parseServerHello(pkt))
-            countpkts = countpkts + 1            
+            counths = counths + 1
+        countpkts = countpkts + 1            
 
     cap.close()
-    return clntpkts,srvrpkts, countpkts
+    return clntpkts,srvrpkts, counths, countpkts
 
-def getHandshakes(clientpkts,serverpkts,countpkts, authpkts):
+def getHandshakes(clientpkts,serverpkts,counths, authpkts):
     """
     After parsing packets, it arranges them into pairs (ch-sh)
     for reporting purposes. Result:
@@ -38,7 +40,7 @@ def getHandshakes(clientpkts,serverpkts,countpkts, authpkts):
     if len(clientpkts)!=len(serverpkts):
         print("Warning: different number of client/server handshake packets. Check your pcap file.")
     
-    for i in range(int(countpkts/2)):
+    for i in range(int(counths/2)):
         srvGroup = int(serverpkts[i][0][0])
         clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
 
@@ -117,8 +119,8 @@ if __name__ == '__main__':
         print('"{}" does not exist.'.format(filename), file=sys.stderr)
     else:        
         #start with public parts of the handshake
-        clientpkts, serverpkts, countpkts = readCaptureFile(filename)
-        authpkts = []
+        clientpkts, serverpkts, counths, countpkts = readCaptureFile(filename)
+        authpkts = []        
         # check for keys
         if args.tlskey is not None:
             #get randoms from client packets
@@ -126,6 +128,6 @@ if __name__ == '__main__':
             #get negotiated ciphersuite from server packet 
             ciphersuites = tlsdec.extractCiphersuite(serverpkts)
             allkeys = tlsdec.read_key_log_file(args.tlskey)                
-            authpkts = tlsdec.decryptHandshakeServerAuth(allkeys,randoms,ciphersuites,filename)            
-        printStats(getHandshakes(clientpkts,serverpkts,countpkts,authpkts))
+            authpkts = tlsdec.decryptHandshakeServerAuth(countpkts, allkeys,randoms,ciphersuites,filename)            
+        printStats(getHandshakes(clientpkts,serverpkts,counths,authpkts))
     print("End of processing.")
