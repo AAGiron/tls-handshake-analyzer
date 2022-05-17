@@ -122,9 +122,14 @@ def decryptHandshakeServerAuth(countpkts, allsecrets,randoms,csuites, filename):
         #print(pkt.tls)
         if "Application Data" in str(pkt.tls):
             #3. Dummy (but quick) approach: try decrypting (Success:parse pkt; Failure:keep going)
+            #print(pkt.tls)
             appdata = pkt.tls.app_data.raw_value
             length = len(appdata)
-            opaqueType = pkt.tls.record_opaque_type
+            if "TLSv1.2 Record Layer" in pkt.tls.record:
+                opaqueType = pkt.tls.record_content_type #TLS 1.2
+            else:
+                opaqueType = pkt.tls.record_opaque_type
+            
             recordLength = pkt.tls.record_length
             version = pkt.tls.record_version
             

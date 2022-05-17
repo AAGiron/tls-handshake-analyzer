@@ -17,7 +17,8 @@ def getSenderMaterial(mode,secrets,sender,materialtype,i, length):
 	returns the expanded key
 	"""			
 	if "client" in sender:
-		if "handshake" in mode:			
+		if "handshake" in mode:
+			
 			return HKDFexpand(secrets[0].split(' ')[2], materialtype,length)
 		else:
 			return HKDFexpand(secrets[2].split(' ')[2], materialtype,length)
@@ -36,11 +37,10 @@ def HKDFexpand(secret, materialtype,l):
 		Fixed sha256 but we could get from the negotiation packets
 	"""
 	#info = b"hkdf-example" bytes.fromhex(materialtype)
-	label = "tls13 " + materialtype
 	hkdf = HKDFExpand(algorithm=hashes.SHA256(),
 				length=l,
 				#salt=materialtype, no salt in this class
-				info=label.encode('utf-8'),
+				info=materialtype.encode('utf-8'),
 	)
 	return hkdf.derive(secret.encode('utf-8'))
 	#probably we will need            opaque label<7..255> = "tls13 " + Label;

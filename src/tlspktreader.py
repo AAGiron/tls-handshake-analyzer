@@ -17,12 +17,14 @@ def readCaptureFile(filename):
     counths = 0
     cap = pyshark.FileCapture(filename,display_filter="tls")
     for pkt in cap:        
-        if "Client Hello" in str(pkt.tls):           
-            clntpkts.append(ch.parseClientHello(pkt))
-            counths = counths + 1
-        if "Server Hello" in str(pkt.tls):        
-            srvrpkts.append(sh.parseServerHello(pkt))
-            counths = counths + 1
+        if "Client Hello" in str(pkt.tls):
+            if "handshake_extensions_key_share_group" in pkt.tls.field_names:   
+                clntpkts.append(ch.parseClientHello(pkt))
+                counths = counths + 1            
+        if "Server Hello" in str(pkt.tls):    
+            if "handshake_extensions_key_share_group" in pkt.tls.field_names:
+                srvrpkts.append(sh.parseServerHello(pkt))
+                counths = counths + 1            
         countpkts = countpkts + 1            
 
     cap.close()
