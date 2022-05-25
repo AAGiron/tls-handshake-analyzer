@@ -3,7 +3,7 @@ import shlex
 import sys
 import tempfile
 import pyshark
-import authentication as auth
+#import authentication as auth
 import hkdfutils as hu
 import symmetric as sym
 
