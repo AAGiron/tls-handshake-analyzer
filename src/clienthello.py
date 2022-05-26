@@ -20,17 +20,25 @@ def parseClientHello(pkt):
 
 	"""
 	resultCH = []
-	resultCH.extend([
-			pkt.tls.handshake_extensions_key_share_group,
-			pkt.tls.handshake_extensions_key_share_client_length,			
-			pkt.tls.handshake_extensions_key_share_key_exchange_length,
-			pkt.tls.handshake_extensions_key_share_key_exchange,
-			pkt.tls.handshake_length])
-	
+	if hasattr(pkt.tls, 'handshake_extensions_key_share_group'): 
+		resultCH.extend([
+				pkt.tls.handshake_extensions_key_share_group,
+				pkt.tls.handshake_extensions_key_share_client_length,			
+				pkt.tls.handshake_extensions_key_share_key_exchange_length,
+				pkt.tls.handshake_extensions_key_share_key_exchange,
+				pkt.tls.handshake_length])
+	else:
+		resultCH.extend([
+				"PSK",
+				pkt.tls.handshake_length])
+
 	additionalResult = []
 	additionalResult.extend([pkt.ip.src, pkt.tcp.port,
 					pkt.length, pkt.frame_info.cap_len,
 					pkt.frame_info.time, pkt.frame_info.time_epoch,pkt.tls.handshake_random])
+
+	#print("CHELLO: ")
+	#print( resultCH)
 
 	return resultCH,additionalResult
 

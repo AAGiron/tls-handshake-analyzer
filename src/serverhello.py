@@ -19,11 +19,19 @@ def parseServerHello(pkt):
 	 pkt.frame_info.time, pkt.frame_info.time_epoch, pkt.tls.handshake_ciphersuite])
 	"""
 	resultSH = []	
-		
-	resultSH.extend([pkt.tls.handshake_extensions_key_share_group,
-			pkt.tls.handshake_extensions_key_share_key_exchange_length,
-			pkt.tls.handshake_extensions_key_share_key_exchange,
-			pkt.tls.handshake_length])
+	if hasattr(pkt.tls, 'handshake_extensions_key_share_group'): 	
+		resultSH.extend([pkt.tls.handshake_extensions_key_share_group,
+				pkt.tls.handshake_extensions_key_share_key_exchange_length,
+				pkt.tls.handshake_extensions_key_share_key_exchange,
+				pkt.tls.handshake_length])
+	else:
+		resultCH.extend([
+				"PSK",
+				pkt.tls.handshake_length])
+
+	#print("SHELLO: ")
+	#print( resultSH)
+
 	additionalResult = []
 	additionalResult.extend([pkt.ip.src, pkt.tcp.port,
 					pkt.length, pkt.frame_info.cap_len,
