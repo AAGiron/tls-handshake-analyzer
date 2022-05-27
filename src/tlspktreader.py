@@ -56,6 +56,11 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
         print("Warning: different number of client/server handshake packets. Check your pcap file.")
         print("CHello: " + str(len(clientpkts)) + " SHello:" + str(len(serverpkts)))
     
+    if len(authpkts) < len(serverpkts):  #got server hello that does not have certificates?
+        print("Considering only the handshakes with server certificates (resumption is not counted)")
+        counths = len(authpkts)
+
+
     for i in range(int(counths)):
         srvGroup = int(serverpkts[i][0][0])
         clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
@@ -70,8 +75,7 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
         hsTotalSize = CHelloSize +SHelloSize     #+auth messages?
         hsCapTotalSize = int(clientpkts[i][1][3])+int(serverpkts[i][1][3])    #+auth messages?
         
-        dt1 = dtparser.parse(clientpkts[i][1][-3].show)
-        #CHelloTime = datetime.strptime(clientpkts[i][1][-3].show,str(dtformat))
+        dt1 = dtparser.parse(clientpkts[i][1][-3].show)        
 
         #Auth data (only if keys are provided)
         if not authpkts:
@@ -92,8 +96,6 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
             handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,
                                 hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,
                                 HSTimeEpoch,HSTime])
-
-        #result
         
     return handshakes
         
@@ -119,13 +121,15 @@ def printStats(handshakes, authflag):
                f"{h[2]:19} |",
                f"{h[3]:19} |", end='')               
         if authflag:
-            print (f"{h[6]:16} |",
+            print (f"{h[6]:23} |",
                    f"{h[7]:32} |",
                    f"{h[8]:25} |", end='')
         
             hstime = (h[-1]) 
-            hstimeEpoch = float(h[-2])        
+            hstimeEpoch = float(h[-2])    
+            #print("H:"+str(totalhstime))
             totalhstime = totalhstime + hstime
+
         totalsize = totalsize + int(h[4]) 
         print("\n")
         print("Handshake KEX+Auth total (bytes): " + str(int(h[4])))
