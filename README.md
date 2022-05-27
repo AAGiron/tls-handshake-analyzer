@@ -1,12 +1,11 @@
 # TLS Handshake Analyzer
 
-TLS 1.3 Handshake analyzer (in progress)
+TLS 1.3 Handshake analyzer
 
 ## Requirements
 
 - `sudo apt install tshark`
 - `sudo pip3 install pyshark`
-- `sudo pip3 install pycryptodomex`
 
 ## Usage
 
@@ -18,9 +17,21 @@ It will give a report showing the information (focusing on costs) of some TLS ha
 
 Make sure you have full permissions in the capture file.
 
+Flags: 
+- `--pcap` path to the pcap/pcapng capture file
+- `--tlskey` path to the TLS Keylog file.
 
-## Additional Information
 
-The analyzer search for pairs {CHello,SHello} to find TLS (1.3 currently) handshakes and extracts sizes. For now, authentication-related sizes (e.g., certificates) are not being computed. The summary results counts how many handshakes were found and sum their sizes. (The total size is computed with pysharpkt.frame_info.cap_len
+## Output Information
 
-More to come.
+The analyzer computes:
+- Sizes: considering KEX objects (keyshare) and Authentication objects: Certificates (length), Certificate Verify (length), Finished (length)
+- Timings: subtracts timings (from wireshark capture time): Finished message (time) - Client Hello message (time). Also prints epoch time from the capture. 
+
+The analyzer search for pairs {CHello,SHello} to find TLS (1.3 currently) handshakes and extracts sizes. The summary results counts how many handshakes were found and sum their sizes and time.
+
+## Known issues
+
+Some pcap files are not dealt consistently between different tshark builds; be sure to use latest versions.
+
+The code needs improvements, e.g., readability, optimizations. (In progress).

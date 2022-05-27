@@ -28,6 +28,7 @@ def parseClientHello(pkt):
 				pkt.tls.handshake_extensions_key_share_key_exchange,
 				pkt.tls.handshake_length])
 	else:
+		print("CHello:PSK here")
 		resultCH.extend([
 				"PSK",
 				pkt.tls.handshake_length])

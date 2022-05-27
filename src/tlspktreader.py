@@ -18,27 +18,28 @@ def readCaptureFile(filename):
     srvrpkts = []
     countpkts = 0
     counths = 0
-    
+    pairCHwithSH = 0
     cap = pyshark.FileCapture(filename,display_filter="tls")
     for pkt in cap:
         
         if tlsdec.skipUnrelatedTLSPackets(pkt):
             continue
         #print(pkt.tls)
-        if "Client Hello" in str(pkt):   
+        if "Client Hello" in str(pkt):
             if "handshake_extensions_key_share_group" in pkt.tls.field_names:                
-                    #if "PSK Key Exchange Mode: PSK with (EC)DHE key establishment (psk_dhe_ke) (1)" in str(pkt):    #excluding PSKs for now
-                    #    continue
-                clntpkts.append(ch.parseClientHello(pkt))
-                counths = counths + 1
+                pairCHwithSH = pairCHwithSH + 1
+                if pairCHwithSH > 1: #discard lonely CHello
+                    clntpkts.pop()
+                clntpkts.append(ch.parseClientHello(pkt))                
         if "Server Hello" in str(pkt):
             if "handshake_extensions_key_share_group" in pkt.tls.field_names:
-                srvrpkts.append(sh.parseServerHello(pkt))
-                counths = counths + 1
+                srvrpkts.append(sh.parseServerHello(pkt))                
+                pairCHwithSH = 0
         countpkts = countpkts + 1
 
     cap.close()
-    print("End of CHello/SHello processing... Now for authentication packets...")
+    counths = len(clntpkts)
+    print("End of CHello/SHello processing. CH: " +  str(len(clntpkts))  +  " SH: "+  str(len(srvrpkts)) + " Now for authentication packets...")
     return clntpkts,srvrpkts, counths, countpkts
 
 def getHandshakes(clientpkts,serverpkts,counths, authpkts):
@@ -55,7 +56,7 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
         print("Warning: different number of client/server handshake packets. Check your pcap file.")
         print("CHello: " + str(len(clientpkts)) + " SHello:" + str(len(serverpkts)))
     
-    for i in range(int(counths/2)):
+    for i in range(int(counths)):
         srvGroup = int(serverpkts[i][0][0])
         clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
 
@@ -118,7 +119,7 @@ def printStats(handshakes, authflag):
                f"{h[2]:19} |",
                f"{h[3]:19} |", end='')               
         if authflag:
-            print (f"{h[6]:13} |",
+            print (f"{h[6]:16} |",
                    f"{h[7]:32} |",
                    f"{h[8]:25} |", end='')
         

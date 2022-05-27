@@ -35,26 +35,17 @@ def skipUnrelatedTLSPackets(pkt):
 def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
     decryptedpkts = []
     cap = pyshark.FileCapture(filename,display_filter="tls", 
-                                override_prefs={'tls.keylog_file': keylogName},
-                                debug=True) 
-    count = 0
-    flag1=0
-    flag2=0
-    flag3=0
+                                override_prefs={'tls.keylog_file': keylogName})
+                                #debug=True) 
+    count = 0    
     for pkt in cap:
-
         if skipUnrelatedTLSPackets(pkt):           
             continue
         
         count = count + 1
         #print(pkt.tls.field_names)
         if hasattr(pkt.tls, 'handshake_type'): 
-            #print(str(int(pkt.tls.handshake_type)))
-            #if int(pkt.tls.handshake_type) == 15: #Certificate Verify            
-                #decryptedpkts.append(auth.parseCertificateVerify(pkt))            
             if "Multiple Handshake Messages" in str(pkt):
-                #print(pkt.tls)
-             #   print("Test:")
                 posCertsLen = 0
                 posVerifyLen = 0
                 posFinLen = 0
@@ -84,22 +75,3 @@ def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
     cap.close()
     #print(len(decryptedpkts))    
     return decryptedpkts
-
-"""
-['record', 'record_content_type', 'record_version', 'record_length', 'handshake', '
-handshake_type', 'handshake_length', 'handshake_version', 'handshake_random', 
-'handshake_ciphersuite', 'handshake_extensions_length', '', 'handshake_extension_type', 
-'handshake_extension_len', 'handshake_extensions_key_share_group', 
-'handshake_extensions_key_share_key_exchange_length', 
-'handshake_extensions_key_share_key_exchange', 'record_opaque_type', 'app_data']
-1407
-['record', 'record_opaque_type', 'record_version', 'record_length', 'app_data']
-221
-
-
-
-['CLIENT_HANDSHAKE_TRAFFIC_SECRET <chrandom> <secret-data>', 
-'SERVER_HANDSHAKE_TRAFFIC_SECRET <chrandom> <secret-data>', 
-'CLIENT_TRAFFIC_SECRET_0 <chrandom> <secret-data>',  
-'SERVER_TRAFFIC_SECRET_0 <chrandom> <secret-data>', 
-"""
