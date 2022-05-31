@@ -29,12 +29,16 @@ def parseServerHello(pkt):
 				"PSK",
 				pkt.tls.handshake_length])
 
-	#print("SHELLO: ")
-	#print( resultSH)
+	if hasattr(pkt.tls,'handshake_session_id'):
+		sid = pkt.tls.handshake_session_id
+	else:
+		sid = pkt.tls.handshake_random
+
 
 	additionalResult = []
 	additionalResult.extend([pkt.ip.src, pkt.tcp.port,
 					pkt.length, pkt.frame_info.cap_len,
-					pkt.frame_info.time, pkt.frame_info.time_epoch, pkt.tls.handshake_ciphersuite])
+					pkt.frame_info.time, pkt.frame_info.time_epoch, 
+					pkt.tls.handshake_ciphersuite, sid]) #, pkt.tls.handshake_random])
 	return resultSH,additionalResult
 

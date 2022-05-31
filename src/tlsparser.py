@@ -46,9 +46,9 @@ def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
         #print(pkt.tls.field_names)
         if hasattr(pkt.tls, 'handshake_type'): 
             if "Multiple Handshake Messages" in str(pkt):
-                posCertsLen = 0
-                posVerifyLen = 0
-                posFinLen = 0
+                posCertsLen = -1
+                posVerifyLen = -1
+                posFinLen = -1
                 i = -1
                 for k in pkt.tls.handshake_type.fields: 
                     i = i + 1
@@ -58,9 +58,9 @@ def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
                         posVerifyLen = i
                     if int(k.show) == 20:
                         posFinLen = i
-                print(str(posCertsLen))
+                #print(str(posCertsLen))
                 if not(posCertsLen == -1 or posVerifyLen == -1 or posFinLen == -1):
-                    #if "Certificate" in str(pkt.tls):
+                    #if ("Certificate" in str(pkt.tls)):
                     decryptedpkts.append([auth.parseCertificateMessage(pkt,posCertsLen),
                                         auth.parseCertificateVerify(pkt,posVerifyLen),
                                         auth.parseFinished(pkt,posFinLen)])         

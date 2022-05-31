@@ -27,14 +27,14 @@ def readCaptureFile(filename):
         #print(pkt.tls)
         if "Client Hello" in str(pkt):
             if "handshake_extensions_key_share_group" in pkt.tls.field_names:                
-                pairCHwithSH = pairCHwithSH + 1
+                pairCHwithSH = pairCHwithSH + 1                
                 if pairCHwithSH > 1: #discard lonely CHello
-                    clntpkts.pop()
+                    clntpkts.pop()                
                 clntpkts.append(ch.parseClientHello(pkt))                
         if "Server Hello" in str(pkt):
             if "handshake_extensions_key_share_group" in pkt.tls.field_names:
                 srvrpkts.append(sh.parseServerHello(pkt))                
-                pairCHwithSH = 0
+                pairCHwithSH = 0                
         countpkts = countpkts + 1
 
     cap.close()
@@ -60,41 +60,101 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
         print("Considering only the handshakes with server certificates (resumption is not counted)")
         counths = len(authpkts)
 
+    #match client random with server session id, otherwise discard chello
+    for cpkt in clientpkts:
+        discard = True    
+        crandom = cpkt[1][-1]
+        for i in range(counths):
+        #for spkt in serverpkts:
+            spkt = serverpkts[i]
+            if (crandom  == spkt[1][-1]):
+                srvGroup = int(spkt[0][0])
+                clntGroup,keyshareSize = ch.getEquivalentGroup(cpkt[0],srvGroup)
+                if clntGroup == -1:
+                    print("Error: Catch ya later, Wrong (KEX) group dudes! (Client:"+str(clntGroup) + " and server:" + str(srvGroup) + ").")
+                    break
+                
+                #KEX data
+                KEXsize = int(keyshareSize)+int(spkt[0][1])
+                CHelloSize = int(cpkt[0][-1])
+                SHelloSize = int(spkt[0][-1])
+                hsTotalSize = CHelloSize +SHelloSize     
+                hsCapTotalSize = int(cpkt[1][3])+int(spkt[1][3])
+                
+                dt1 = float(cpkt[1][-2].show) #epoch time   
 
-    for i in range(int(counths)):
-        srvGroup = int(serverpkts[i][0][0])
-        clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
+                if not authpkts:
+                    handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,hsCapTotalSize])
+                    discard = False
+                else:
+                    #now get corresponding server certificate
+                    #                for j in range(i,len(authpkts)):
+                    for apkt in authpkts:
+                        
+                        if apkt[1][1][0] != spkt[1][0]:
+                            continue
+                        
+                        #if spkt[1][0] != authpkts[i][1][1][0]: #IP checking (i might not be the same for SHello...)
+                            #server hello without cert, assuming in-order packets (should be)
+                            #print("Skipping server hello without subsequent certificate message (at "+str(spkt[1][4])+").")
+                            #break
+                        discard = False
 
-        if clntGroup == -1:
-            print("Error: Catch ya later, Wrong (KEX) group dudes! (Client:"+str(clntGroup) + " and server:" + str(srvGroup) + ").")
-            return []
-        #KEX data
-        KEXsize = int(keyshareSize)+int(serverpkts[i][0][1])
-        CHelloSize = int(clientpkts[i][0][-1])
-        SHelloSize = int(serverpkts[i][0][-1])
-        hsTotalSize = CHelloSize +SHelloSize     #+auth messages?
-        hsCapTotalSize = int(clientpkts[i][1][3])+int(serverpkts[i][1][3])    #+auth messages?
+                        #TODO: could search for insecure ciphersuite usage (not checking advertising):
+                        #listUnsafeCiphersuites = checkUnsafeCiphersuiteAPI(spkt[1][-2])
+
+                        #Auth data (only if keys are provided)                    
+                        AuthAlgo = authpkts[i][1][0][0]
+                        HSSignatureSize = authpkts[i][1][0][1]
+                        CertificatesSize = int(authpkts[i][0][0][1])
+                        HSTime = authpkts[i][2][1][-2]            
+                        HSTimeEpoch = float(authpkts[i][2][1][-1].show) - dt1
+                                                                                            #Finished Length
+                        hsTotalSize = hsTotalSize + HSSignatureSize + CertificatesSize + int(authpkts[i][2][0][0])
+                        
+                        handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,
+                                            hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,
+                                            HSTimeEpoch,HSTime])
+                        break
+        if discard:
+            print("Discard CHello (" + str(crandom) + "): couldn't find matching SHello session ID or Certificate")
+
+#    for i in range(int(counths)):
+#        srvGroup = int(serverpkts[i][0][0])
+#        clntGroup,keyshareSize = ch.getEquivalentGroup(clientpkts[i][0],srvGroup)
+
+#        if clntGroup == -1:
+#            print("Error: Catch ya later, Wrong (KEX) group dudes! (Client:"+str(clntGroup) + " and server:" + str(srvGroup) + ").")
+#            return []
         
-        dt1 = float(clientpkts[i][1][-2].show) #epoch time   
+        
+        #KEX data
+#        KEXsize = int(keyshareSize)+int(serverpkts[i][0][1])
+#        CHelloSize = int(clientpkts[i][0][-1])
+#        SHelloSize = int(serverpkts[i][0][-1])
+#        hsTotalSize = CHelloSize +SHelloSize     #+auth messages?
+#        hsCapTotalSize = int(clientpkts[i][1][3])+int(serverpkts[i][1][3])    #+auth messages?
+        
+#        dt1 = float(clientpkts[i][1][-2].show) #epoch time   
 
         #Auth data (only if keys are provided)
-        if not authpkts:
-            handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,hsCapTotalSize])
-        else:
+#        if not authpkts:
+#            handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,hsCapTotalSize])
+#        else:
             #Auth algorithm | Handshake Signature size (bytes) 
             #print(authpkts[i])
-            if (i >= len(authpkts)):
-                continue
-            AuthAlgo = authpkts[i][1][0][0]
-            HSSignatureSize = authpkts[i][1][0][1]
-            CertificatesSize = int(authpkts[i][0][0][1])
-            HSTime = authpkts[i][2][1][-2]            
-            HSTimeEpoch = float(authpkts[i][2][1][-1].show) - dt1
+#            if (i >= len(authpkts)):
+#                continue
+#            AuthAlgo = authpkts[i][1][0][0]
+#            HSSignatureSize = authpkts[i][1][0][1]
+#            CertificatesSize = int(authpkts[i][0][0][1])
+#            HSTime = authpkts[i][2][1][-2]            
+#            HSTimeEpoch = float(authpkts[i][2][1][-1].show) - dt1
                                                                                 #Finished Length
-            hsTotalSize = hsTotalSize + HSSignatureSize + CertificatesSize + int(authpkts[i][2][0][0])
-            handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,
-                                hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,
-                                HSTimeEpoch,HSTime])
+#            hsTotalSize = hsTotalSize + HSSignatureSize + CertificatesSize + int(authpkts[i][2][0][0])
+#            handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,
+#                                hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,
+#                                HSTimeEpoch,HSTime])
         
     return handshakes
         
@@ -104,7 +164,7 @@ def printStats(handshakes, authflag):
     Prints some statistics and information about the handshakes present in the capture file used
     """
     if not handshakes: 
-        print("No TLS handshake to analyze.")
+        print("Could not found TLS 1.3 handshakes with same session ID and/or server certificates to analyze.")
         return
 
     i = 0
@@ -120,7 +180,7 @@ def printStats(handshakes, authflag):
                f"{h[2]:19} |",
                f"{h[3]:19} |", end='')               
         if authflag:
-            print (f"{h[6]:23} |",
+            print (f"{h[6]:24} |",
                    f"{h[7]:32} |",
                    f"{h[8]:25} |", end='')
         
