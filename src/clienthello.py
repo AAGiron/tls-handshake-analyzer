@@ -3,10 +3,6 @@ import sys
 import os
 import pyshark
 
-
-
-
-
 ## Entry point
 def parseClientHello(pkt):
 	"""
@@ -19,27 +15,46 @@ def parseClientHello(pkt):
 	Result for packet data: 
 	[pkt.ip.src, pkt.tcp.port,
 	 pkt.length, pkt.frame_info.cap_len,
-	 pkt.frame_info.time, pkt.frame_info.time_epoch])
+	 pkt.frame_info.time, pkt.frame_info.time_epoch,
+	 pkt.tls.handshake_random])
 
-	 Note that Keyshare can be filled with more than one crypto object (ECDHE pk) and so only one would be considered
 	"""
-	#print(pkt.tls.field_names)
 	resultCH = []
-	resultCH.extend([
-			pkt.tls.handshake_extensions_key_share_group,
-			pkt.tls.handshake_extensions_key_share_client_length,			
-			pkt.tls.handshake_extensions_key_share_key_exchange_length,
-			pkt.tls.handshake_extensions_key_share_key_exchange,
-			pkt.tls.handshake_length])
-	
+	if hasattr(pkt.tls, 'handshake_extensions_key_share_group'): 
+		resultCH.extend([
+				pkt.tls.handshake_extensions_key_share_group,
+				pkt.tls.handshake_extensions_key_share_client_length,			
+				pkt.tls.handshake_extensions_key_share_key_exchange_length,
+				pkt.tls.handshake_extensions_key_share_key_exchange,
+				pkt.tls.handshake_length])
+	else:
+		print("CHello:PSK here")
+		resultCH.extend([
+				"PSK",
+				pkt.tls.handshake_length])
+
+	if hasattr(pkt.tls,'handshake_session_id'):
+		crandom = pkt.tls.handshake_session_id
+	else:
+		crandom = pkt.tls.handshake_random
+
 	additionalResult = []
 	additionalResult.extend([pkt.ip.src, pkt.tcp.port,
 					pkt.length, pkt.frame_info.cap_len,
-					pkt.frame_info.time, pkt.frame_info.time_epoch])
+					pkt.frame_info.time, pkt.frame_info.time_epoch,crandom])
+
+	#print("CHELLO: ")
+	#print( resultCH)
 
 	return resultCH,additionalResult
 
 
+#client can advertise more than one keyshare. Check the correct one
+def getEquivalentGroup(clntpkt,srvGroup): 	
+	count = 0
+	for k in clntpkt[0].fields:		
+		if int(k.show) == srvGroup:			
+			return int(k.show), int(clntpkt[2].fields[count].show)
+		count = count + 1
 
-
-"""handshake_extensions_supported_version"""
+	return -1,-1
