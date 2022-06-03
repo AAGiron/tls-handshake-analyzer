@@ -103,7 +103,7 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
                         #TODO: could search for insecure ciphersuite usage (not checking advertising):
                         #listUnsafeCiphersuites = checkUnsafeCiphersuiteAPI(spkt[1][-2])
 
-                        #Auth data (only if keys are provided)                    
+                        #Auth data (only if keys are provided)    
                         AuthAlgo = authpkts[i][1][0][0]
                         HSSignatureSize = authpkts[i][1][0][1]
                         CertificatesSize = int(authpkts[i][0][0][1])
