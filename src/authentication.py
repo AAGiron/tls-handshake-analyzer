@@ -27,8 +27,7 @@ def parseCertificateVerify(pkt,position=-1):
 	"""
 		parse result:
 	"""
-	#if position==-1:
-
+	#if position==-1:	
 	splited = str(pkt).split("Signature length:")
 	SignatureLength = int(splited[1][:splited[1].find('\n',1)])
 
@@ -53,7 +52,7 @@ def parseFinished(pkt,position=-1):
 	"""
 		MAC Length and
 		additional info, including handshake time when receive (client,server)_finished
-	"""
+	"""	
 	resultF = []	
 #	attributes = dir(pkt.tls.handshake_length)
 #	print(attributes)
@@ -62,7 +61,7 @@ def parseFinished(pkt,position=-1):
 		FinLength = sys.maxsize
 		for p in pkt.tls.handshake_length.fields:
 			if int(p.showname_value) < FinLength:
-				FinLength = int(p.showname_value)
+				FinLength = int(p.showname_value)		
 	else:
 		FinLength = pkt.tls.handshake_length.fields[position].show
 	resultF.extend([int(FinLength)])
