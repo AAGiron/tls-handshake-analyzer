@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import pyshark
+import statistics
 from datetime import datetime
 from dateutil import parser as dtparser
 import clienthello as ch
@@ -171,7 +172,7 @@ def printStats(handshakes, authflag):
 
     i = 0
     totalsize = 0
-    #totalhstime = dtparser.parse("00:00:00")
+    stdevsamples = []
     totalhstime = 0
     for h in handshakes:
         i = i + 1        
@@ -191,7 +192,7 @@ def printStats(handshakes, authflag):
             hstimeEpoch = float(h[-2])
             #print("H:"+str(totalhstime))
             totalhstime = totalhstime + hstimeEpoch
-
+            stdevsamples.append(hstimeEpoch)
         totalsize = totalsize + int(h[4]) 
         print("\n")
         print("CHello and SHello cost: " + str(h[2]+h[3]))
@@ -201,11 +202,17 @@ def printStats(handshakes, authflag):
             print("Handshake time (s): " + str((hstimeEpoch))) #+ " ; epoch: "+ str((hstimeEpoch)))
         print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     
+    hstimeprint = "{:.6f}".format(totalhstime)
+    avgprint = "{:.6f}".format(totalhstime/len(handshakes))
+    stdevprint = "{:.6f}".format(statistics.stdev(stdevsamples))
     print("")
     print("Summary:")
-    print("Number of  Handshakes  | Total HS Size (bytes) | HS Time Cumulative")
-    print (f"{i:22} |", f"{totalsize:21} | ",f"{str(totalhstime):18} ")
-    #print (f"{i:22} |", f"{totalsize:21} | ")
+    print("Number of  Handshakes  | Total HS Size (bytes) | HS Time Cumulative (s) | Avg HS Time (s) | Stdev HS Time (s)")
+    print (f"{i:22} |", f"{totalsize:21} | ",
+            f"{hstimeprint:21} | ",
+            f"{avgprint:14} | ",
+            f"{stdevprint:14} |"  )
+    #print (f"{i:22} |", f"{totalsize:21} | ") 
 
 
  
@@ -226,6 +233,9 @@ if __name__ == '__main__':
                         help='pcap file to parse', required=True)
     parser.add_argument('--tlskey', metavar='<tls key log file>',
                         help='key log file to decrypt tls messages', required=False)
+    parser.add_argument('--avgtime', metavar='<number of handshakes>',
+                        help='number of handshakes for average timings', required=False)
+
     args = parser.parse_args()
     
     filename = args.pcap
