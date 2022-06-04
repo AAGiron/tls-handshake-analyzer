@@ -31,13 +31,27 @@ def skipUnrelatedTLSPackets(pkt):
         return 1 #ignoring session ticket
     return 0
 
+#pkt has certificate, certVerify and Finished
+def hasAllAuthTypes(pkt):
+    requiredTypes = [11,15,20]
+    i = 0
+    for k in pkt.tls.handshake_type.fields:         
+        if int(k.show) in requiredTypes:
+            i = i + 1
+
+    if i == 3:    
+        return True    
+    return False
+
 #entry point 
 def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
     decryptedpkts = []
+    tempAuthList = []
+    desiredAuthListLength = 0
     cap = pyshark.FileCapture(filename,display_filter="tls", 
                                 override_prefs={'tls.keylog_file': keylogName})
                                 #debug=True) 
-    count = 0    
+    count = 0
     for pkt in cap:
         if skipUnrelatedTLSPackets(pkt):           
             continue
@@ -45,7 +59,7 @@ def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
         count = count + 1
         #print(pkt.tls.field_names)
         if hasattr(pkt.tls, 'handshake_type'): 
-            if "Multiple Handshake Messages" in str(pkt):
+            if "Multiple Handshake Messages" in str(pkt) or (hasAllAuthTypes(pkt)):
                 posCertsLen = -1
                 posVerifyLen = -1
                 posFinLen = -1
@@ -60,18 +74,43 @@ def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
                         posFinLen = i
                 #print(str(posCertsLen))
                 if not(posCertsLen == -1 or posVerifyLen == -1 or posFinLen == -1):
-                    #if ("Certificate" in str(pkt.tls)):
+                    #if ("Certificate" in str(pkt.tls)):                    
                     decryptedpkts.append([auth.parseCertificateMessage(pkt,posCertsLen),
                                         auth.parseCertificateVerify(pkt,posVerifyLen),
                                         auth.parseFinished(pkt,posFinLen)])         
             else:
-                if int(pkt.tls.handshake_type) == 11 and "Certificate Verify" in str(pkt):
-                    decryptedpkts.append([auth.parseCertificateMessage(pkt),
-                                        auth.parseCertificateVerify(pkt),
-                                        auth.parseFinished(pkt)]) 
-                #for some reason, pyshark leaves certverify/finished in the same pkt                
+                #print(desiredAuthListLength)
+                if int(pkt.tls.handshake_type) == 11 and "Certificate Verify" in str(pkt.tls): #and not("Finished" in str(pkt)):
+                    tempAuthList.append(auth.parseCertificateMessage(pkt))
+                    tempAuthList.append(auth.parseCertificateVerify(pkt))
+                    desiredAuthListLength = desiredAuthListLength ^ 0x03
+             #       decryptedpkts.append([auth.parseCertificateMessage(pkt),
+              #                          auth.parseCertificateVerify(pkt),
+               #                         auth.parseFinished(pkt)]) 
+                #for some reason, pyshark leaves certverify/finished in the same pkt: not always
+                else:
+                    if "Certificate Verify" in str(pkt) and "Finished" in str(pkt.tls):                        
+                        tempAuthList.append(auth.parseCertificateVerify(pkt))
+                        tempAuthList.append(auth.parseFinished(pkt))
+                        desiredAuthListLength = desiredAuthListLength ^ 0x06
+                    else:
+                        #big packets may be separated
+                        #should do only this way. rsrs
+                        if int(pkt.tls.handshake_type) == 11:
+                            tempAuthList.append(auth.parseCertificateMessage(pkt))
+                            desiredAuthListLength = desiredAuthListLength ^ 0x01
+                        if int(pkt.tls.handshake_type) == 15:
+                            tempAuthList.append(auth.parseCertificateVerify(pkt))
+                            desiredAuthListLength = desiredAuthListLength ^ 0x02
+                        if int(pkt.tls.handshake_type) == 20 and tempAuthList != []:                            
+                            tempAuthList.append(auth.parseFinished(pkt)) #exclude client finished for now
+                            desiredAuthListLength = desiredAuthListLength ^ 0x04
+
+                if desiredAuthListLength == 7: #111 -> 3 bits on -> packets are there
+                    decryptedpkts.append(tempAuthList)
+                    tempAuthList = []
+                    desiredAuthListLength = 0
             #if int(pkt.tls.handshake_type) == 20 and ipserver == pkt.ip.src: #if "Finished" in str(pkt.tls):            
                 
     cap.close()
-    #print(len(decryptedpkts))    
     return decryptedpkts

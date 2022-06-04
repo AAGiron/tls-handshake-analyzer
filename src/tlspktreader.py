@@ -103,17 +103,19 @@ def getHandshakes(clientpkts,serverpkts,counths, authpkts):
                         #TODO: could search for insecure ciphersuite usage (not checking advertising):
                         #listUnsafeCiphersuites = checkUnsafeCiphersuiteAPI(spkt[1][-2])
 
-                        #Auth data (only if keys are provided)                    
+                        #Auth data (only if keys are provided)    
+                        #print(authpkts[i])
                         AuthAlgo = authpkts[i][1][0][0]
                         HSSignatureSize = authpkts[i][1][0][1]
                         CertificatesSize = int(authpkts[i][0][0][1])
-                        HSTime = authpkts[i][2][1][-2]            
+                        FinishedSize = int(authpkts[i][2][0][0])
+                        HSTime = authpkts[i][2][1][-2]  
                         HSTimeEpoch = float(authpkts[i][2][1][-1].show) - dt1
                                                                                             #Finished Length
-                        hsTotalSize = hsTotalSize + HSSignatureSize + CertificatesSize + int(authpkts[i][2][0][0])
+                        hsTotalSize = hsTotalSize + HSSignatureSize + CertificatesSize + FinishedSize
                         
                         handshakes.append([clntGroup, KEXsize, CHelloSize, SHelloSize,hsTotalSize,
-                                            hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,
+                                            hsCapTotalSize,AuthAlgo,HSSignatureSize,CertificatesSize,FinishedSize,
                                             HSTimeEpoch,HSTime])
                         break
         if discard:
@@ -174,7 +176,7 @@ def printStats(handshakes, authflag):
     for h in handshakes:
         i = i + 1        
         print("------------------------- Cost statistics handshake nº"+ str(i) + " (in bytes):")
-        print("KEX algorithm | KEX size (bytes) | CHELLO size (bytes) | SHELLO size (bytes) | Auth algorithm          | Handshake Signature size (bytes) | Certificates size (bytes) |")
+        print("KEX algorithm | KEX size (bytes) | CHELLO size (bytes) | SHELLO size (bytes) | Auth algorithm          | Handshake Signature size (bytes) | Certificates size (bytes) | Finished size (bytes)")
         print (f"{h[0]:13} |",
                f"{h[1]:16} |",
                f"{h[2]:19} |",
@@ -182,7 +184,8 @@ def printStats(handshakes, authflag):
         if authflag:
             print (f"{h[6]:24} |",
                    f"{h[7]:32} |",
-                   f"{h[8]:25} |", end='')
+                   f"{h[8]:25} |",
+                   f"{h[9]:19} |", end='')
         
             #hstime = (h[-1]) 
             hstimeEpoch = float(h[-2])
@@ -191,10 +194,12 @@ def printStats(handshakes, authflag):
 
         totalsize = totalsize + int(h[4]) 
         print("\n")
+        print("CHello and SHello cost: " + str(h[2]+h[3]))
+        print("Authentication cost (Certificates, CertificateVerify, Finished): " + str(h[7]+h[8]+h[9]))
         print("Handshake KEX+Auth total (bytes): " + str(int(h[4])))
         if authflag:
             print("Handshake time (s): " + str((hstimeEpoch))) #+ " ; epoch: "+ str((hstimeEpoch)))
-        print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     
     print("")
     print("Summary:")
