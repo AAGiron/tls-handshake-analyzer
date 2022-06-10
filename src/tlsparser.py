@@ -3,18 +3,13 @@ import shlex
 import sys
 import tempfile
 import pyshark
-import authentication as auth
+from tlsobj.chello import CHello
+from tlsobj.serverdata import Serverdata
+from tlsobj.certificate import Certificate
+from tlsobj.certificateverify import Certificateverify
+from tlsobj.finished import Finished
 
 
-"""
-	Decrypt TLS 1.3 handshake messages using pyshark (only if a tls-debug-file is provided)
-    more like a parser
-"""
-def extractCiphersuite(serverpkts):
-    csuites = []
-    for p in serverpkts:
-        csuites.append(str(p[1][6].showname))
-    return csuites
 
 """
     This function skips packets that the filter might not ignore
@@ -31,86 +26,53 @@ def skipUnrelatedTLSPackets(pkt):
         return 1 #ignoring session ticket
     return 0
 
-#pkt has certificate, certVerify and Finished
-def hasAllAuthTypes(pkt):
-    requiredTypes = [11,15,20]
-    i = 0
-    for k in pkt.tls.handshake_type.fields:         
-        if int(k.show) in requiredTypes:
-            i = i + 1
+#returns how many handshake_types are in a packet
+def getHSTypes(pkt):
+	listtypes = []
+	#if hasattr(pkt.tls.handshake_type ,'fields'):
+	if hasattr(pkt.tls,'handshake_type'):
+		for k in pkt.tls.handshake_type.fields:                 
+			listtypes.append(int(k.show))
+	#else:	#app data; discard		
+	return listtypes
 
-    if i == 3:    
-        return True    
-    return False
 
-#entry point 
-def pysharkDecryptHandshakeServerAuth(countpkts, filename, keylogName):
-    decryptedpkts = []
-    tempAuthList = []
-    desiredAuthListLength = 0
-    cap = pyshark.FileCapture(filename,display_filter="tls", 
-                                override_prefs={'tls.keylog_file': keylogName})
-                                #debug=True) 
-    count = 0
-    for pkt in cap:
-        if skipUnrelatedTLSPackets(pkt):           
-            continue
-        
-        count = count + 1
-        #print(pkt.tls.field_names)
-        if hasattr(pkt.tls, 'handshake_type'): 
-            if "Multiple Handshake Messages" in str(pkt) or (hasAllAuthTypes(pkt)):
-                posCertsLen = -1
-                posVerifyLen = -1
-                posFinLen = -1
-                i = -1
-                for k in pkt.tls.handshake_type.fields: 
-                    i = i + 1
-                    if int(k.show) == 11:
-                        posCertsLen = i
-                    if int(k.show) == 15:
-                        posVerifyLen = i
-                    if int(k.show) == 20:
-                        posFinLen = i
-                #print(str(posCertsLen))
-                if not(posCertsLen == -1 or posVerifyLen == -1 or posFinLen == -1):
-                    #if ("Certificate" in str(pkt.tls)):                    
-                    decryptedpkts.append([auth.parseCertificateMessage(pkt,posCertsLen),
-                                        auth.parseCertificateVerify(pkt,posVerifyLen),
-                                        auth.parseFinished(pkt,posFinLen)])         
-            else:
-                #print(desiredAuthListLength)
-                if int(pkt.tls.handshake_type) == 11 and "Certificate Verify" in str(pkt.tls): #and not("Finished" in str(pkt)):
-                    tempAuthList.append(auth.parseCertificateMessage(pkt))
-                    tempAuthList.append(auth.parseCertificateVerify(pkt))
-                    desiredAuthListLength = desiredAuthListLength ^ 0x03
-             #       decryptedpkts.append([auth.parseCertificateMessage(pkt),
-              #                          auth.parseCertificateVerify(pkt),
-               #                         auth.parseFinished(pkt)]) 
-                #for some reason, pyshark leaves certverify/finished in the same pkt: not always
-                else:
-                    if "Certificate Verify" in str(pkt) and "Finished" in str(pkt.tls):                        
-                        tempAuthList.append(auth.parseCertificateVerify(pkt))
-                        tempAuthList.append(auth.parseFinished(pkt))
-                        desiredAuthListLength = desiredAuthListLength ^ 0x06
-                    else:
-                        #big packets may be separated
-                        #should do only this way. rsrs
-                        if int(pkt.tls.handshake_type) == 11:
-                            tempAuthList.append(auth.parseCertificateMessage(pkt))
-                            desiredAuthListLength = desiredAuthListLength ^ 0x01
-                        if int(pkt.tls.handshake_type) == 15:
-                            tempAuthList.append(auth.parseCertificateVerify(pkt))
-                            desiredAuthListLength = desiredAuthListLength ^ 0x02
-                        if int(pkt.tls.handshake_type) == 20 and tempAuthList != []:                            
-                            tempAuthList.append(auth.parseFinished(pkt)) #exclude client finished for now
-                            desiredAuthListLength = desiredAuthListLength ^ 0x04
+"""
+	Entry point: returns an object with the corresponding pkt data
+"""
+def getTLSObjectList(pkt):
+	returnlist = []#?	
+		
+	hstypes = getHSTypes(pkt)
+	for t in hstypes:	#https://datatracker.ietf.org/doc/html/rfc8446 section 4
+		#CHello
+		if t == 1:
+			chobj = CHello()
+			chobj.parseClientHello(pkt)			
+			returnlist.append(chobj)
+		#SHello and auth	
+		elif t == 2:
+			shobj = Serverdata()
+			shobj.parseSHello(pkt)
+			returnlist.append(shobj)
+		elif t == 11:
+			certobj = Certificate()
+			certobj.parseCertificate(pkt)
+			returnlist.append(certobj)
+		elif t == 15:
+			certverobj = Certificateverify()
+			certverobj.parseCertVerify(pkt)
+			returnlist.append(certverobj)
+		#Finished
+		elif t == 20:
+			finobj = Finished()
+			finobj.parseFinished(pkt)
+			#if clientFinished:
+			returnlist.append(finobj)
+			#else:
 
-                if desiredAuthListLength == 7: #111 -> 3 bits on -> packets are there
-                    decryptedpkts.append(tempAuthList)
-                    tempAuthList = []
-                    desiredAuthListLength = 0
-            #if int(pkt.tls.handshake_type) == 20 and ipserver == pkt.ip.src: #if "Finished" in str(pkt.tls):            
-                
-    cap.close()
-    return decryptedpkts
+	return returnlist
+
+
+
+	
