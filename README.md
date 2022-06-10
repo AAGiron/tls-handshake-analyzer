@@ -26,9 +26,9 @@ Flags:
 
 The analyzer computes:
 - Sizes: considering KEX objects (keyshare) and Authentication objects: Certificates (length), Certificate Verify (length), Finished (length)
-- Timings: subtracts timings (from wireshark capture time): Finished message (time) - Client Hello message (time). Also prints epoch time from the capture. 
+- Timings: subtracts timings (from wireshark capture time): Server Finished message (time) - Client Hello message (time).
 
-The analyzer search for pairs {CHello,SHello} to find TLS (1.3 currently) handshakes and extracts sizes. The summary results counts how many handshakes were found and sum their sizes and time.
+The analyzer search for in-order pairs {CHello,SHello} to find TLS 1.3 handshakes and extracts sizes. The summary results counts how many handshakes were found and sum their sizes and time.
 
 ## Known issues
 
