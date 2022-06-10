@@ -26,6 +26,8 @@ def readCaptureFile(filename, tlskeyfilename):
     #temp handshake object
     hs = Handshake()
     sfinished = True
+    hspackets = 0
+    print("\tCapture File opened. Start parsing...")
     for pkt in cap:
 
         if tlspar.skipUnrelatedTLSPackets(pkt):
@@ -45,17 +47,19 @@ def readCaptureFile(filename, tlskeyfilename):
             elif isinstance(ob, Certificateverify):
                 setattr(hs, "certificateverify", ob)
             elif isinstance(ob, Finished):
-                if sfinished: #HS time based on server finished
-                    setattr(hs, "finished", ob) 
-                    time = float(ob.pktinf.epoch.show) - float(hs.beginhstime.show)
-                    setattr(hs, "hstime", time * 1000) #ms
+                if sfinished: #HS time based on server finished                    
+                    setattr(hs, "finished", ob)
+                    if hasattr(hs.beginhstime, 'show'):
+                        time = float(ob.pktinf.epoch.show) - float(hs.beginhstime.show)     
+                        setattr(hs, "hstime", time * 1000) #ms
                     sfinished = False
                 else:
                     setattr(hs, "cfinished", ob) 
                     sfinished = True
-                hs.setSize()
+        if (hs.hasKEXandAuthData()):
+            hs.setSize()
 
-        if hs.iscomplete():
+        if hs.verifyCorrectness():
             hslist.append(hs)        
             hs = Handshake()
 
@@ -93,7 +97,7 @@ def printStats(handshakes):
         totalsize = totalsize + int(h.hssize) 
         print("\n")        
         print("Handshake KEX+Auth total (bytes): " + str(h.hssize))        
-        print("Handshake time (s): " + str((h.hstime))) #+ " ; epoch: "+ str((hstimeEpoch)))
+        print("Handshake time (ms): " + str((h.hstime))) #+ " ; epoch: "+ str((hstimeEpoch)))
         print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     
     hstimeprint = "{:.6f}".format(totalhstime)
