@@ -13,9 +13,10 @@ from tlsobj.finished import Finished
 
 #used for Finished packets
 def matchSource(finishedOb,HSob):
-    if finishedOb.pktinf.srcip == HSob.pktinf.srcip and \
-        finishedOb.pktinf.srcport == HSob.pktinf.srcport:
-        return True
+    if HSob is not None:
+        if finishedOb.pktinf.srcip == HSob.pktinf.srcip and \
+            finishedOb.pktinf.srcport == HSob.pktinf.srcport:
+            return True
     return False
 
 
