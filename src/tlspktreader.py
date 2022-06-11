@@ -11,6 +11,14 @@ from tlsobj.certificate import Certificate
 from tlsobj.certificateverify import Certificateverify
 from tlsobj.finished import Finished
 
+#used for Finished packets
+def matchSource(finishedOb,HSob):
+    if finishedOb.pktinf.srcip == HSob.pktinf.srcip and \
+        finishedOb.pktinf.srcport == HSob.pktinf.srcport:
+        return True
+    return False
+
+
 def readCaptureFile(filename, tlskeyfilename):
     """
         Assumes in-order TLS packets
@@ -47,20 +55,19 @@ def readCaptureFile(filename, tlskeyfilename):
             elif isinstance(ob, Certificateverify):
                 setattr(hs, "certificateverify", ob)
             elif isinstance(ob, Finished):
-                if sfinished: #HS time based on server finished                    
+                if matchSource(ob, hs.serverdata):  #HS time based on server finished
                     setattr(hs, "finished", ob)
                     if hasattr(hs.beginhstime, 'show'):
                         time = float(ob.pktinf.epoch.show) - float(hs.beginhstime.show)     
-                        setattr(hs, "hstime", time * 1000) #ms
-                    sfinished = False
-                else:
+                        setattr(hs, "hstime", time * 1000) #ms                
+                elif matchSource(ob, hs.chello):
                     setattr(hs, "cfinished", ob) 
-                    sfinished = True
+                
         if (hs.hasKEXandAuthData()):
             hs.setSize()
 
         if hs.verifyCorrectness():
-            hslist.append(hs)        
+            hslist.append(hs)
             hs = Handshake()
 
 

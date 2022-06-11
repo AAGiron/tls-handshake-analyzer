@@ -24,6 +24,8 @@ def skipUnrelatedTLSPackets(pkt):
         return 1
     if hasattr(pkt.tls, 'handshake_session_ticket'): 
         return 1 #ignoring session ticket
+    if "Client Master Key (2)" in str(pkt.tls):
+    	return 1 #sslv2 crashes the parser
     return 0
 
 #returns how many handshake_types are in a packet
