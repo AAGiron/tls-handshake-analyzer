@@ -20,7 +20,8 @@ class Serverdata(object):
 			self.keyshareGroup = pkt.tls.handshake_extensions_key_share_group
 			self.keyshareLength = pkt.tls.handshake_extensions_key_share_key_exchange_length
 			self.keyshareKeyExchange = pkt.tls.handshake_extensions_key_share_key_exchange
-		self.srandom = pkt.tls.handshake_random
+		if hasattr(pkt.tls, 'handshake_random'): 
+			self.srandom = pkt.tls.handshake_random		
 		if hasattr(pkt.tls,'handshake_session_id'):
 			self.sessionID = pkt.tls.handshake_session_id
 		self.hsciphersuite = pkt.tls.handshake_ciphersuite
