@@ -36,7 +36,7 @@ def readCaptureFile(filename, tlskeyfilename):
     hs = Handshake()
     sfinished = True
     hspackets = 0
-    print("\tCapture File opened. Start parsing...")
+    print("Capture File opened. Start parsing...")
     for pkt in cap:
 
         if tlspar.skipUnrelatedTLSPackets(pkt):
@@ -51,7 +51,7 @@ def readCaptureFile(filename, tlskeyfilename):
             elif isinstance(ob, Serverdata):
                 setattr(hs, "serverdata", ob)
                 setattr(hs, "ciphersuite", ob.hsciphersuite)
-            elif isinstance(ob, Certificate):
+            elif isinstance(ob, Certificate):                
                 setattr(hs, "certificatedata", ob)
             elif isinstance(ob, Certificateverify):
                 setattr(hs, "certificateverify", ob)
@@ -64,7 +64,7 @@ def readCaptureFile(filename, tlskeyfilename):
                 elif matchSource(ob, hs.chello):
                     setattr(hs, "cfinished", ob) 
                 
-        if (hs.hasKEXandAuthData()):
+        if (hs.hasKEXandAuthData()):            
             hs.setSize()
 
         if hs.verifyCorrectness():
@@ -90,8 +90,8 @@ def printStats(handshakes):
     for h in handshakes:
         i = i + 1        
         print("------------------------- Cost statistics handshake nº"+ str(i) + " (in bytes):")
-        print("KEX algorithm | KEX size (bytes) | CHELLO size (bytes) | SHELLO size (bytes) | Auth algorithm          | Handshake Signature size (bytes) | Certificates size (bytes) | Finished size (bytes)")
-        print (f"{h.serverdata.getNameFromGroup():13} |",
+        print("KEX algorithm        | KEX size (bytes) | CHELLO size (bytes) | SHELLO size (bytes) | Auth algorithm          | Handshake Signature size (bytes) | Certificates size (bytes) | Finished size (bytes)")
+        print (f"{h.serverdata.getKEXNameFromGroup():20} |",
                f"{h.chello.keyshareLength:16} |",
                f"{h.chello.size:19} |",
                f"{h.serverdata.size:19} |", end='')               
@@ -106,11 +106,14 @@ def printStats(handshakes):
         print("\n")        
         print("Handshake KEX+Auth total (bytes): " + str(h.hssize))        
         print("Handshake time (ms): " + str((h.hstime))) #+ " ; epoch: "+ str((hstimeEpoch)))
-        print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     
     hstimeprint = "{:.6f}".format(totalhstime)
     avgprint = "{:.6f}".format(totalhstime/len(handshakes))
-    stdevprint = "{:.6f}".format(statistics.stdev(stdevsamples))
+    try:
+        stdevprint = "{:.6f}".format(statistics.stdev(stdevsamples))
+    except statistics.StatisticsError:
+        stdevprint = float("NaN")
     print("")
     print("Summary:")
     print("Number of  Handshakes  | Total HS Size (bytes) | HS Time Cumulative (ms) | Avg HS Time (ms) | Stdev HS Time (ms)")

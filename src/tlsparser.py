@@ -30,12 +30,14 @@ def skipUnrelatedTLSPackets(pkt):
 
 #returns how many handshake_types are in a packet
 def getHSTypes(pkt):
-	listtypes = []
-	#if hasattr(pkt.tls.handshake_type ,'fields'):
-	if hasattr(pkt.tls,'handshake_type'):
-		for k in pkt.tls.handshake_type.fields:                 
-			listtypes.append(int(k.show))
-	#else:	#app data; discard		
+	listtypes = []	
+	listLayers = pkt.get_multiple_layers("tls")
+	for l in listLayers:		
+		if hasattr(l,'handshake_type'):
+			for k in l.handshake_type.fields:				
+				listtypes.append(int(k.show))
+	
+		#else:	#app data; discard		
 	return listtypes
 
 
@@ -47,7 +49,7 @@ def getTLSObjectList(pkt):
 		
 	hstypes = getHSTypes(pkt)
 	for t in hstypes:	#https://datatracker.ietf.org/doc/html/rfc8446 section 4
-		#CHello
+		#CHello		
 		if t == 1:
 			chobj = CHello()
 			chobj.parseClientHello(pkt)			
@@ -58,7 +60,7 @@ def getTLSObjectList(pkt):
 			shobj.parseSHello(pkt)
 			returnlist.append(shobj)
 		elif t == 11:
-			certobj = Certificate()
+			certobj = Certificate()	
 			certobj.parseCertificate(pkt)
 			returnlist.append(certobj)
 		elif t == 15:
