@@ -1,5 +1,7 @@
 import os
 from tlsobj.pktinfo import Pktinfo
+#from tlsobj.oid import oid
+import tlsobj.oid as oid
 
 class Serverdata(object):
 	"""docstring for Serverdata"""
@@ -31,7 +33,7 @@ class Serverdata(object):
 		self.pktinf = info
 
 
-	def getNameFromGroup(self):
-		return "KEXName"
+	def getKEXNameFromGroup(self):
+		return oid.KEXmap[self.keyshareGroup]
 
 

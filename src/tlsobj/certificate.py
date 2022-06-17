@@ -1,5 +1,6 @@
 import os
 from tlsobj.pktinfo import Pktinfo
+import tlsobj.oid as oid
 
 class Certificate(object):
 	"""docstring for Certificate"""
@@ -17,3 +18,8 @@ class Certificate(object):
 		info.parsePktInfo(pkt)
 		self.pktinf = info
 
+	def getOID(self):
+		return self.certAlgorithm
+
+	def getAuthNameFromOID(self):
+		return oid.Authmap[str(self.certAlgorithm)]

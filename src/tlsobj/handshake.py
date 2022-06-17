@@ -33,6 +33,7 @@ class Handshake(object):
 			return True			
 		else:
 			return False
+			
 	def setSize(self):
 		""" CHelloSize + SHelloSize + Auth size  """
 		self.hssize = self.chello.size +self.serverdata.size + self.certificatedata.certsLength + self.certificateverify.signatureLength + self.finished.size
@@ -80,5 +81,10 @@ class Handshake(object):
 
 		if Port_s != self.finished.pktinf.srcport:
 			return False
+
+		#additional check for PQC auth names
+		if "Unknown" in self.certificateverify.signatureAlgo:
+			self.certificateverify.signatureAlgo = self.certificatedata.getAuthNameFromOID()
+
 		return True
 		
