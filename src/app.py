@@ -3,6 +3,7 @@
 import dash
 from dash import dcc
 from dash import html
+import dash_uploader as du
 from dash.dependencies import Input, Output, ClientsideFunction
 
 import numpy as np
@@ -23,7 +24,11 @@ app.config.suppress_callback_exceptions = True
 
 # Path
 BASE_PATH = pathlib.Path(__file__).parent.resolve()
-DATA_PATH = BASE_PATH.joinpath("data").resolve()
+#DATA_PATH = BASE_PATH.joinpath("data").resolve()
+
+UPLOAD_FOLDER = r"uploads"
+du.configure_upload(app, UPLOAD_FOLDER)
+
 
 # Read data
 #df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv.gz"))
@@ -56,46 +61,38 @@ def generate_control_card():
         children=[
         	html.Br(),
             html.P("Select Capture file:"),
-            dcc.Upload(
-		        id='upload-data-pcap',
-		        children=html.Div([
-		            'Drag and Drop or ',
-		            html.A('Select Files')
-		        ]),
-		        style={
-		            'width': '100%',
-		            'height': '60px',
-		            'lineHeight': '60px',
-		            'borderWidth': '1px',
-		            'borderStyle': 'dashed',
-		            'borderRadius': '5px',
-		            'textAlign': 'center',
-		            #'margin': '10px'
-		        },
-		        # Allow multiple files to be uploaded
-		        multiple=False
-    		),
+            html.Div(
+            	id="cap-upload-area",
+            	children=du.Upload(
+            		id='pcap-uploader',
+	                text='Drag and Drop files here',
+	                text_completed='Completed: ',
+	                pause_button=False,
+	                cancel_button=True,
+	                #max_file_size=1800,  # 1800 Mb
+	                filetypes=['pcap', 'pcapng'],
+	               	default_style=dict({'width': '100%',
+	                					'minHeight': 1,
+            							'lineHeight': 1}),
+            	),
+	        ),
             html.Br(),
             html.P("Select TLS keylog file:"),
-            dcc.Upload(
-		        id='upload-data-keylog',
-		        children=html.Div([
-		            'Drag and Drop or ',
-		            html.A('Select Files')
-		        ]),
-		        style={
-		            'width': '100%',
-		            'height': '60px',
-		            'lineHeight': '60px',
-		            'borderWidth': '1px',
-		            'borderStyle': 'dashed',
-		            'borderRadius': '5px',
-		            'textAlign': 'center',
-		            #'margin': '10px'
-		        },
-		        # Allow multiple files to be uploaded
-		        multiple=False
-    		),        
+            html.Div(
+            	id="keylog-upload-area",
+            	children=du.Upload(
+            		id='keylog-uploader',
+	                text='Drag and Drop files here',
+	                text_completed='Completed: ',
+	                pause_button=False,
+	                cancel_button=True,
+	                #max_file_size=1800,  # 1800 Mb
+	                #filetypes=['pcap', 'pcapng'],
+	                default_style=dict({'width': '100%',
+	                					'minHeight': 1,
+            							'lineHeight': 1}),
+            	),
+	        ),
             html.Br(),
             
             html.P("Options:"),
