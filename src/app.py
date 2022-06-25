@@ -3,13 +3,11 @@
 import dash
 from dash import dcc
 from dash import html
+from dash import dash_table
+import plotly.graph_objs as go
 import dash_uploader as du
 from dash.dependencies import Input, Output, ClientsideFunction
 
-import numpy as np
-import pandas as pd
-import datetime
-from datetime import datetime as dt
 import pathlib
 
 app = dash.Dash(
@@ -109,7 +107,13 @@ def generate_control_card():
     )
 
 
-
+def blank_figure():
+    fig = go.Figure(go.Scatter(x=[], y = []))
+    fig.update_layout(template = "plotly_dark")
+#    fig.update_xaxes(showgrid = False, showticklabels = False, zeroline=False)
+#    fig.update_yaxes(showgrid = False, showticklabels = False, zeroline=False)
+    
+    return fig
 
 
 app.layout = html.Div(
@@ -124,7 +128,8 @@ app.layout = html.Div(
         # Left column
         html.Div(
             id="left-column",
-            className="four columns",
+            className="two columns",
+            #style={'display': 'none'},
             children=[description_card(), generate_control_card()]
             + [
                 html.Div(
@@ -134,28 +139,106 @@ app.layout = html.Div(
         ),
         # Right column
         html.Div(
-            id="right-column",
-            className="eight columns",
+            id="right-column",            
+            className="nine columns",
             children=[
-                #Title
-                html.Div(id="tls-title",
-                	style={
-			            'width': '100%',
-			            'font-size': '12px',
-		        	},
-                	children=[
- 	              		html.Pre("""
-  ________   _____    __  __                __     __          __           ___                __                     
- /_  __/ /  / ___/   / / / /___ _____  ____/ /____/ /_  ____ _/ /_____     /   |  ____  ____ _/ /_  ______  ___  _____
-  / / / /   \__ \   / /_/ / __ `/ __ \/ __  / ___/ __ \/ __ `/ //_/ _ \   / /| | / __ \/ __ `/ / / / /_  / / _ \/ ___/
- / / / /______/ /  / __  / /_/ / / / / /_/ (__  ) / / / /_/ / ,< /  __/  / ___ |/ / / / /_/ / / /_/ / / /_/  __/ /    
-/_/ /_____/____/  /_/ /_/\__,_/_/ /_/\__,_/____/_/ /_/\__,_/_/|_|\___/  /_/  |_/_/ /_/\__,_/_/\__, / /___/\___/_/     
-                                                                                             /____/                   
-  """
-            			)
-                	],
+            	html.Br(),
+                html.Div(
+					id="security_information",
+					children=[
+						html.H6("Security Information:"),
+						dash_table.DataTable(
+				          id="sec_info",
+				          style_as_list_view=True,
+				          columns=[{'id': "ciphersuites", 'name': "Ciphersuites"}, 
+				          {'id': "kexalgo", 'name': "KEX Algo."},
+				          {'id': "authalgo", 'name': "Auth. Algo."},
+				          {'id': "hasech", 'name': "Has ECH Support?"}],
+				          style_header={
+						        'backgroundColor': '#222222',
+						        'color': 'white',
+						        'textAlign': 'left',
+						        'border': '0px'
+						  },
+						  style_data={
+						        'backgroundColor':  '#222222',
+						        'color': 'white',
+						        'textAlign': 'left',
+						        'border': '0px'
+						  },
+				        ),  
+				        html.Br(),
+				        #we can use conditional formatting here: red for insecure, green for secure ciphers...
+				        #https://dash.plotly.com/datatable/style
+						dash_table.DataTable(
+				          id="insec_info",
+				          columns=[{'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Found:"}], 
+				          style_as_list_view=True,
+				          style_header={
+						        'backgroundColor': '#222222',
+						        'color': 'white',
+						        'textAlign': 'left',
+						        'border': '0px'
+						  },
+						  style_data={
+						        'backgroundColor':  '#222222',
+						        'color': 'white',
+						        'textAlign': 'left',
+								'border': '0px'
+						  },
+				        ),
+				        html.Br(),
+				        html.H6("Performance Information:"),						
+				        #Graphs
+				        html.Div(id="size-graphs", className="row",				        
+							children=[dcc.Graph(
+						        id='size-per-artifact',
+						        responsive=True, style={
+	 								   #'display': 'block'
+	 								   "width":400, "margin": 0,
+	 								   'display': 'inline-block'
+								},
+						        figure=blank_figure()
+						    ),
+						    dcc.Graph(
+						        id='size-per-app-data',
+						        responsive=True, style={
+						        		"width":400, "margin": 0,
+	 								   'display': 'inline-block'
+								},
+						        figure=blank_figure()
+						    )
+						]),
+					    dcc.Graph(
+					        id='hs-timings',
+					        responsive=True, style={
+ 								   'display': 'block'
+							},
+					        figure=blank_figure()
+					    ),
+					    html.Br(),
+					    dash_table.DataTable(
+				          id="summary_tls",
+				          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
+						          {'id': "total_hs", 'name': "Total HS Size"},
+						          {'id': "hs_id", 'name': "HS Total Time (ms)"},
+						          {'id': "hs_id", 'name': "HS Avg. Time (ms)"},
+						          {'id': "hs_id", 'name': "HS Stdev. Time (ms)"}], 
+				          style_as_list_view=False,
+				          style_header={
+						        'backgroundColor': '#222222',
+						        'color': 'white',
+						        'textAlign': 'left',						        
+						  },
+						  style_data={
+						        'backgroundColor':  '#222222',
+						        'color': 'white',
+						        'textAlign': 'left'
+						  },
+				        ),
+				        html.Br(),
+					],
                 ),
-                
                 #html.Div(
                 #    id="patient_volume_card",
                 #    children=[
