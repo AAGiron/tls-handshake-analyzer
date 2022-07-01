@@ -40,7 +40,7 @@ def description_card():
         id="description-card",
         children=[
             #html.H5("TLS 1.3 Analyzer"),
-            html.H3("TLS 1.3 Analyzer"),
+            html.H3("TLS Handshake Analyzer"),
             html.Div(
                 id="intro",
                 #children="Reads .pcap/.pcapng capture file and the corresponding TLS keylog file to show security information (such as ciphersuite usage) and performance (in terms of handshake time and size of cryptographic objects).",
@@ -300,4 +300,4 @@ app.layout = html.Div(
 
 # Run the server
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
