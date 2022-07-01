@@ -1,17 +1,19 @@
 #adapted from https://github.com/plotly/dash-sample-apps/tree/main/apps/dash-clinical-analytics
-
+import time
 import dash
+import pandas as pd
 from dash import dcc
 from dash import html
 from dash import dash_table
 import plotly.graph_objs as go
 import dash_uploader as du
-from dash.dependencies import Input, Output, ClientsideFunction
+from dash.dependencies import Input, Output, State
 
 import pathlib
 
 app = dash.Dash(
     __name__,
+    prevent_initial_callbacks=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
 app.title = "TLS 1.3 Analyzer"
@@ -94,8 +96,11 @@ def generate_control_card():
             html.Br(),
             
             html.P("Options:"),
-            dcc.Checklist(['Check Ciphersuite usage', 'Check Encrypted CH extensions'],
-                      ['Check Ciphersuite usage', 'Check Encrypted CH extensions']
+            dcc.Checklist(id="checklist", 
+            			options={
+				        	'cipher': 'Check Ciphersuite usage',
+				        	'ech': 'Check ECH extension' 	
+   						},
         	),
 			html.Br(),		
             html.Div(
@@ -154,6 +159,7 @@ app.layout = html.Div(
 				          {'id': "kexalgo", 'name': "KEX Algo."},
 				          {'id': "authalgo", 'name': "Auth. Algo."},
 				          {'id': "hasech", 'name': "Has ECH Support?"}],
+				          data=[],
 				          style_header={
 						        'backgroundColor': '#222222',
 						        'color': 'white',
@@ -186,116 +192,156 @@ app.layout = html.Div(
 						        'textAlign': 'left',
 								'border': '0px'
 						  },
+						  data=[],
 				        ),
 				        html.Br(),
 				        html.H6("Performance Information:"),						
 				        #Graphs
-				        html.Div(id="size-graphs", className="row",				        
-							children=[dcc.Graph(
+				        #html.Div(id="size-graphs", className="row",				        
+							#children=[							
+						dcc.Graph(
 						        id='size-per-artifact',
 						        responsive=True, style={
 	 								   #'display': 'block'
-	 								   "width":400, "margin": 0,
-	 								   'display': 'inline-block'
+	 								   #"width":400, "margin": 0,
+	 								   #'display': 'inline-block'
+	 								   'display': 'block'
 								},
 						        figure=blank_figure()
-						    ),
-						    dcc.Graph(
+						),
+						dcc.Graph(
 						        id='size-per-app-data',
 						        responsive=True, style={
-						        		"width":400, "margin": 0,
-	 								   'display': 'inline-block'
+						        		#"width":400, "margin": 0,
+	 								   #'display': 'inline-block'
+	 								   'display': 'block'
 								},
 						        figure=blank_figure()
-						    )
-						]),
+						),
+						#]),
 					    dcc.Graph(
 					        id='hs-timings',
 					        responsive=True, style={
  								   'display': 'block'
 							},
 					        figure=blank_figure()
-					    ),
-					    html.Br(),
-					    dash_table.DataTable(
-				          id="summary_tls",
-				          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
-						          {'id': "total_hs", 'name': "Total HS Size"},
-						          {'id': "hs_id", 'name': "HS Total Time (ms)"},
-						          {'id': "hs_id", 'name': "HS Avg. Time (ms)"},
-						          {'id': "hs_id", 'name': "HS Stdev. Time (ms)"}], 
-				          style_as_list_view=False,
-				          style_header={
-						        'backgroundColor': '#222222',
-						        'color': 'white',
-						        'textAlign': 'left',						        
-						  },
-						  style_data={
-						        'backgroundColor':  '#222222',
-						        'color': 'white',
-						        'textAlign': 'left'
-						  },
-				        ),
-				        html.Br(),
+					    ),					    					    			      
 					],
-                ),
-                #html.Div(
-                #    id="patient_volume_card",
-                #    children=[
-                #        html.B("Patient Volume"),
-                #        html.Hr(),
-                #        dcc.Graph(id="patient_volume_hm"),
-                #    ],
-                #),
-                # Patient Wait time by Department
-                #html.Div(
-                #    id="wait_time_card",
-                #    children=[
-                #        html.B("Patient Wait Time and Satisfactory Scores"),
-                #        html.Hr(),
-                #        html.Div(id="wait_time_table", children=initialize_table()),
-                #    ],
-                #),
+                ), 
+                html.Br(),
+                html.Div(id="summary",
+					children=[
+	                	dash_table.DataTable(
+					          id="summary_tls",
+					          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
+							          {'id': "total_hs_size", 'name': "Total HS Size"},
+							          {'id': "total_hs_time", 'name': "HS Total Time (ms)"},
+							          {'id': "avg_hs_time", 'name': "HS Avg. Time (ms)"},
+							          {'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}], 
+					          data=[],
+					          style_as_list_view=False,
+					          style_header={
+							        'backgroundColor': '#222222',
+							        'color': 'white',
+							        'textAlign': 'left',						        
+							  },
+							  style_data={
+							        'backgroundColor':  '#222222',
+							        'color': 'white',
+							        'textAlign': 'left'
+							  },
+					    ),	
+                	]
+                ),               
             ],
         ),
     ],
 )
 
 
-#@app.callback(
-#    Output("patient_volume_hm", "figure"),
-#    [
-#        Input("date-picker-select", "start_date"),
-#        Input("date-picker-select", "end_date"),
-#        Input("clinic-select", "value"),
-#        Input("patient_volume_hm", "clickData"),
-##        Input("admit-select", "value"),
- #       Input("reset-btn", "n_clicks"),
- #   ],
-#)
 
-#app.clientside_callback(
-#    ClientsideFunction(namespace="clientside", function_name="resize"),
-#    Output("output-clientside", "children"),
-#    [Input("wait_time_table", "children")] + wait_time_inputs + score_inputs,
-#)
+"""
+	TLS Analyze (Start button)
+	Tables are updated by dicts	
+"""
+@app.callback(
+    Output('sec_info', 'data'),
+    Output('insec_info', 'data'),
+    Input('tlsanalyze-btn', 'n_clicks'),
+    State('sec_info', 'data'),
+    State('sec_info', 'columns'),
+    State('insec_info', 'data'),
+    State('insec_info', 'columns'),    
+    )
+def update_tables(n_clicks, secinfo_rows, secinfo_columns,
+				insecinfo_rows, insecinfo_columns):
+	secinfodict = {"ciphersuites": "",
+			      "kexalgo": "",
+			      "authalgo": "",
+			      "hasech": ""
+			    }
+			    #
+
+	if n_clicks > 0:
+    	#sec_info table
+		for c in secinfo_columns:
+			secinfodict.update({c['id']: "red"})
+    	
+		secinfo_rows.append(secinfodict)
+
+    	#insec information
+		for c in insecinfo_columns:
+			insecinfo_rows.append({c['id']:'Insecure Test'})
+
+        
+	return secinfo_rows, insecinfo_rows
 
 
-#@app.callback(
-#    Output("wait_time_table", "children"),
-#    [
-#        Input("date-picker-select", "start_date"),
-#        Input("date-picker-select", "end_date"),
-#        Input("clinic-select", "value"),
-#        Input("admit-select", "value"),
-#        Input("patient_volume_hm", "clickData"),
-#        Input("reset-btn", "n_clicks"),
-#    ]
-#    + wait_time_inputs
-#    + score_inputs,
-#)
-#def update_table(start, end, clinic, admit_type, heatmap_click, reset_click, *args):
-#    return table
+
+@app.callback(
+    Output('size-per-artifact', 'figure'),
+    Output('size-per-app-data', 'figure'),
+    Output('hs-timings', 'figure'),
+    Input('tlsanalyze-btn', 'n_clicks'),       
+    )
+def update_all_figures(n_clicks):
+	#fig1, fig2, fig3
+	fig1 = blank_figure()
+	fig2 = blank_figure()
+	fig3 = blank_figure()
+	if n_clicks > 0:
+		fig1.update_layout(title="Size Per Artifacts")
+		fig2.update_layout(title="Application data Payload")
+		fig3.update_layout(title="Handshake Timings")
+
+	return fig1, fig2, fig3
+
+
+
+
+@app.callback(
+    Output('summary_tls', 'data'),
+    Input('tlsanalyze-btn', 'n_clicks'),    
+    State('summary_tls', 'data'),
+    State('summary_tls', 'columns'),    
+    )
+def update_summary_tables(n_clicks,summary_rows, summary_columns):
+	summarydict = {"hs_id": "",
+			      "total_hs_size": "",
+			      "total_hs_time": "",
+			      "avg_hs_time": "",
+			      "stdev_hs_time": ""
+			    }
+
+	if n_clicks > 0:		
+    	#summary_tls table
+		for c in summary_columns:
+			summarydict.update({c['id']: "test"})
+    	
+		summary_rows.append(summarydict)
+
+        
+	return summary_rows
 
 
 # Run the server
