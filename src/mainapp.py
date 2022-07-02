@@ -26,8 +26,11 @@ app.config.suppress_callback_exceptions = True
 BASE_PATH = pathlib.Path(__file__).parent.resolve()
 #DATA_PATH = BASE_PATH.joinpath("data").resolve()
 
+#file upload configurations
 UPLOAD_FOLDER = r"uploads"
-du.configure_upload(app, UPLOAD_FOLDER)
+du.configure_upload(app, UPLOAD_FOLDER,use_upload_id=False)
+pcap_latest_file = ""
+tlskeylog_latest_file = ""
 
 
 # Read data
@@ -252,12 +255,37 @@ app.layout = html.Div(
 							  },
 					    ),	
                 	]
-                ),               
+                ),
+                html.Div(
+                	id="callback-output-pcap"),
+                html.Div(
+                	id="callback-output-keylog"),
             ],
         ),
     ],
 )
 
+
+"""
+	Dash Callbacks
+"""
+@du.callback(
+    output=Output("callback-output-pcap", "children"),
+    id="pcap-uploader",
+)
+def callback_setpcapfile(filenames):	
+	global pcap_latest_file
+	pcap_latest_file = filenames[0]
+	return None
+
+@du.callback(
+    output=Output("callback-output-keylog", "children"),
+	id="keylog-uploader",
+)
+def callback_setkeylogfile(filenames):
+	global tlskeylog_latest_file 
+	tlskeylog_latest_file = filenames[0]
+	return None
 
 
 """
@@ -267,14 +295,14 @@ app.layout = html.Div(
 @app.callback(
     Output('sec_info', 'data'),
     Output('insec_info', 'data'),
-    Input('tlsanalyze-btn', 'n_clicks'),
+    Input('tlsanalyze-btn', 'n_clicks'),    
     State('sec_info', 'data'),
     State('sec_info', 'columns'),
     State('insec_info', 'data'),
     State('insec_info', 'columns'),    
     )
 def update_tables(n_clicks, secinfo_rows, secinfo_columns,
-				insecinfo_rows, insecinfo_columns):
+				  insecinfo_rows, insecinfo_columns):
 	secinfodict = {"ciphersuites": "",
 			      "kexalgo": "",
 			      "authalgo": "",
@@ -282,6 +310,12 @@ def update_tables(n_clicks, secinfo_rows, secinfo_columns,
 			    }
 			    #
 
+	#parse:
+	#print(pcap_latest_file)
+	#print(tlskeylog_latest_file)
+
+
+	#show results
 	if n_clicks > 0:
     	#sec_info table
 		for c in secinfo_columns:
@@ -346,4 +380,4 @@ def update_summary_tables(n_clicks,summary_rows, summary_columns):
 
 # Run the server
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
