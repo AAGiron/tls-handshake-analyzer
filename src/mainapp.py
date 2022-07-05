@@ -2,14 +2,15 @@
 import time
 import dash
 import pandas as pd
+import plotly.graph_objs as go
+import dash_uploader as du
+import pathlib
 from dash import dcc
 from dash import html
 from dash import dash_table
-import plotly.graph_objs as go
-import dash_uploader as du
 from dash.dependencies import Input, Output, State
-
-import pathlib
+from callbacks import get_callbacks
+from callbacks import blank_figure
 
 app = dash.Dash(
     __name__,
@@ -17,7 +18,6 @@ app = dash.Dash(
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
 app.title = "TLS 1.3 Analyzer"
-
 
 server = app.server
 app.config.suppress_callback_exceptions = True
@@ -29,17 +29,13 @@ BASE_PATH = pathlib.Path(__file__).parent.resolve()
 #file upload configurations
 UPLOAD_FOLDER = r"uploads"
 du.configure_upload(app, UPLOAD_FOLDER,use_upload_id=False)
-pcap_latest_file = ""
-tlskeylog_latest_file = ""
 
-#user options configurations
-enable_ech = False
-enable_ciphersuite_check = False
+# Get callbacks
+get_callbacks(app)
 
-# Read data
-#df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv.gz"))
-
-
+"""
+Layout functions
+"""
 def description_card():
     """
     :return: A Div containing dashboard title & descriptions.
@@ -118,15 +114,10 @@ def generate_control_card():
     )
 
 
-def blank_figure():
-    fig = go.Figure(go.Scatter(x=[], y = []))
-    fig.update_layout(template = "plotly_dark")
-#    fig.update_xaxes(showgrid = False, showticklabels = False, zeroline=False)
-#    fig.update_yaxes(showgrid = False, showticklabels = False, zeroline=False)
-    
-    return fig
 
-
+"""
+Main Layout
+"""
 app.layout = html.Div(
     id="app-container",
     children=[
@@ -258,138 +249,14 @@ app.layout = html.Div(
 							  },
 					    ),	
                 	]
-                ),
-                html.Div(
-                	id="callback-output-pcap"),
-                html.Div(
-                	id="callback-output-keylog"),
-                html.Div(id='hidden-div', style={'display':'none'}),
+                ),               
+                html.Div(id='hidden-div-pcap', style={'display':'none'}),
+                html.Div(id='hidden-div-keylog', style={'display':'none'}),
+                html.Div(id='hidden-div-checklist', style={'display':'none'}),
             ],
         ),
     ],
 )
-
-
-"""
-	Dash Callbacks
-"""
-@du.callback(
-    output=Output("callback-output-pcap", "children"),
-    id="pcap-uploader",
-)
-def callback_setpcapfile(filenames):	
-	global pcap_latest_file
-	pcap_latest_file = filenames[0]
-	return None
-
-@du.callback(
-    output=Output("callback-output-keylog", "children"),
-	id="keylog-uploader",
-)
-def callback_setkeylogfile(filenames):
-	global tlskeylog_latest_file 
-	tlskeylog_latest_file = filenames[0]
-	return None
-
-
-@app.callback(
-	Output("hidden-div", "children"),
-	Input("checklist", "value"),	
-	)
-def update_checklist_selection(check_values):
-	if 'cipher' in check_values:
-		enable_ciphersuite_check = True
-	if 'ech' in check_values:
-		enable_ech = True 
-
-
-"""
-	TLS Analyze (Start button)
-	Tables are updated by dicts	
-"""
-@app.callback(
-    Output('sec_info', 'data'),
-    Output('insec_info', 'data'),
-    Input('tlsanalyze-btn', 'n_clicks'),     
-    State('sec_info', 'data'),
-    State('sec_info', 'columns'),
-    State('insec_info', 'data'),
-    State('insec_info', 'columns'),    
-    )
-def update_tables(n_clicks, secinfo_rows, secinfo_columns,
-				  insecinfo_rows, insecinfo_columns):
-	secinfodict = {"ciphersuites": "",
-			      "kexalgo": "",
-			      "authalgo": "",
-			      "hasech": ""
-			    }
-			    #
-
-	#parse:
-	#print(pcap_latest_file)
-	#print(tlskeylog_latest_file)
-
-	#show results
-	if n_clicks > 0:
-    	#sec_info table
-		for c in secinfo_columns:
-			secinfodict.update({c['id']: "red"})
-    	
-		secinfo_rows.append(secinfodict)
-
-    	#insec information
-		for c in insecinfo_columns:
-			insecinfo_rows.append({c['id']:'Insecure Test'})
-
-        
-	return secinfo_rows, insecinfo_rows
-
-
-
-@app.callback(
-    Output('size-per-artifact', 'figure'),
-    Output('size-per-app-data', 'figure'),
-    Output('hs-timings', 'figure'),
-    Input('tlsanalyze-btn', 'n_clicks'),       
-    )
-def update_all_figures(n_clicks):
-	#fig1, fig2, fig3
-	fig1 = blank_figure()
-	fig2 = blank_figure()
-	fig3 = blank_figure()
-	if n_clicks > 0:
-		fig1.update_layout(title="Size Per Artifacts")
-		fig2.update_layout(title="Application data Payload")
-		fig3.update_layout(title="Handshake Timings")
-
-	return fig1, fig2, fig3
-
-
-
-
-@app.callback(
-    Output('summary_tls', 'data'),
-    Input('tlsanalyze-btn', 'n_clicks'),    
-    State('summary_tls', 'data'),
-    State('summary_tls', 'columns'),    
-    )
-def update_summary_tables(n_clicks,summary_rows, summary_columns):
-	summarydict = {"hs_id": "",
-			      "total_hs_size": "",
-			      "total_hs_time": "",
-			      "avg_hs_time": "",
-			      "stdev_hs_time": ""
-			    }
-
-	if n_clicks > 0:		
-    	#summary_tls table
-		for c in summary_columns:
-			summarydict.update({c['id']: "test"})
-    	
-		summary_rows.append(summarydict)
-
-        
-	return summary_rows
 
 
 # Run the server
