@@ -32,6 +32,9 @@ du.configure_upload(app, UPLOAD_FOLDER,use_upload_id=False)
 pcap_latest_file = ""
 tlskeylog_latest_file = ""
 
+#user options configurations
+enable_ech = False
+enable_ciphersuite_check = False
 
 # Read data
 #df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv.gz"))
@@ -260,6 +263,7 @@ app.layout = html.Div(
                 	id="callback-output-pcap"),
                 html.Div(
                 	id="callback-output-keylog"),
+                html.Div(id='hidden-div', style={'display':'none'}),
             ],
         ),
     ],
@@ -288,6 +292,17 @@ def callback_setkeylogfile(filenames):
 	return None
 
 
+@app.callback(
+	Output("hidden-div", "children"),
+	Input("checklist", "value"),	
+	)
+def update_checklist_selection(check_values):
+	if 'cipher' in check_values:
+		enable_ciphersuite_check = True
+	if 'ech' in check_values:
+		enable_ech = True 
+
+
 """
 	TLS Analyze (Start button)
 	Tables are updated by dicts	
@@ -295,7 +310,7 @@ def callback_setkeylogfile(filenames):
 @app.callback(
     Output('sec_info', 'data'),
     Output('insec_info', 'data'),
-    Input('tlsanalyze-btn', 'n_clicks'),    
+    Input('tlsanalyze-btn', 'n_clicks'),     
     State('sec_info', 'data'),
     State('sec_info', 'columns'),
     State('insec_info', 'data'),
@@ -313,7 +328,6 @@ def update_tables(n_clicks, secinfo_rows, secinfo_columns,
 	#parse:
 	#print(pcap_latest_file)
 	#print(tlskeylog_latest_file)
-
 
 	#show results
 	if n_clicks > 0:
@@ -380,4 +394,4 @@ def update_summary_tables(n_clicks,summary_rows, summary_columns):
 
 # Run the server
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
