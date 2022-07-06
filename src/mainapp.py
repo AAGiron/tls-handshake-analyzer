@@ -205,23 +205,23 @@ app.layout = html.Div(
 								},
 						        figure=blank_figure()
 						),
-						dcc.Graph(
-						        id='size-per-app-data',
-						        responsive=True, style={
-						        		#"width":400, "margin": 0,
-	 								   #'display': 'inline-block'
-	 								   'display': 'block'
-								},
-						        figure=blank_figure()
-						),
-						#]),
-					    dcc.Graph(
-					        id='hs-timings',
-					        responsive=True, style={
- 								   'display': 'block'
-							},
-					        figure=blank_figure()
-					    ),					    					    			      
+						# dcc.Graph(
+						#         id='size-per-app-data',
+						#         responsive=True, style={
+						#         		#"width":400, "margin": 0,
+	 				# 				   #'display': 'inline-block'
+	 				# 				   'display': 'block'
+						# 		},
+						#         figure=blank_figure()
+						# ),
+						# #]),
+					 #    dcc.Graph(
+					 #        id='hs-timings',
+					 #        responsive=True, style={
+ 					# 			   'display': 'block'
+						# 	},
+					 #        figure=blank_figure()
+					 #    ),					    					    			      
 					],
                 ), 
                 html.Br(),
@@ -230,10 +230,11 @@ app.layout = html.Div(
 	                	dash_table.DataTable(
 					          id="summary_tls",
 					          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
-							          {'id': "total_hs_size", 'name': "Total HS Size"},
-							          {'id': "total_hs_time", 'name': "HS Total Time (ms)"},
-							          {'id': "avg_hs_time", 'name': "HS Avg. Time (ms)"},
-							          {'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}], 
+							          {'id': "hs_size", 'name': "HS Size (bytes)"},
+							          {'id': "hs_time", 'name': "HS Time (ms)"},
+							          #{'id': "avg_hs_time", 'name': "HS Avg. Time (ms)"},
+							          #{'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}
+							          ], 
 					          data=[],
 					          style_as_list_view=False,
 					          style_header={

@@ -3,6 +3,7 @@ import dash
 import pandas as pd
 import plotly.graph_objs as go
 import dash_uploader as du
+import statistics
 import wrapper
 from dash import dcc
 from dash import html
@@ -57,43 +58,48 @@ def get_callbacks(app):
     @app.callback(
         Output('sec_info', 'data'),
         Output('insec_info', 'data'),
+        Output('summary_tls', 'data'),
         Input('tlsanalyze-btn', 'n_clicks'),     
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
         State('insec_info', 'data'),
-        State('insec_info', 'columns'),    
+        State('insec_info', 'columns'),     
+        State('summary_tls', 'data'),
+        State('summary_tls', 'columns'),     
         )
     def update_tables(n_clicks, secinfo_rows, secinfo_columns,
-                      insecinfo_rows, insecinfo_columns):
+                      insecinfo_rows, insecinfo_columns,
+                      summary_rows, summary_columns):
         secinfodict = {"ciphersuites": "",
                       "kexalgo": "",
                       "authalgo": "",
                       "hasech": ""
-                    }
-                    #
+                    }                    
+        i = 0
 
         #parse:        
         hslist = wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
 
         #show results
         if n_clicks > 0:
-            #sec_info table
+            
             for hs in hslist:
+                i = i + 1
+                #sec_info table                                        
+                secinfo_rows.append({'ciphersuites': hs.ciphersuite,
+                    'kexalgo': hs.serverdata.getKEXNameFromGroup(),
+                    'authalgo': hs.certificateverify.signatureAlgo,
+                    'hasech': "Not implemented yet"})
 
-                #for c in secinfo_columns:
-                secinfodict.update({'ciphersuites': hs.ciphersuite})
-                secinfodict.update({'kexalgo': hs.serverdata.getKEXNameFromGroup()})
-                secinfodict.update({'authalgo': hs.certificateverify.signatureAlgo})
-                secinfodict.update({'hasech': "Not implemented yet"})
+                #insec information
+                for c in insecinfo_columns:
+                    insecinfo_rows.append({c['id']:'Not implemented yet'})
+
+                #summary_tls table
+                hstimeprint = "{:.2f}".format(hs.hstime)            
+                summary_rows.append({'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
             
-                secinfo_rows.append(secinfodict)
-
-            #insec information
-            for c in insecinfo_columns:
-                insecinfo_rows.append({c['id']:'Not implemented yet'})
-
-            
-        return secinfo_rows, insecinfo_rows
+        return secinfo_rows, insecinfo_rows, summary_rows
 
 
 
@@ -118,34 +124,6 @@ def get_callbacks(app):
 
 
 
-    #@app.callback(
-    #    Output('summary_tls', 'data'),
-    #    Input('tlsanalyze-btn', 'n_clicks'),    
-    #    State('summary_tls', 'data'),
-    #    State('summary_tls', 'columns'),    
-    #    )
-    #def update_summary_tables(n_clicks,summary_rows, summary_columns):
-    #    summarydict = {"hs_id": "",
-    #                  "total_hs_size": "",
-    #                  "total_hs_time": "",
-    #                  "avg_hs_time": "",
-    #                  "stdev_hs_time": ""
-    #                }
-
-    #    if n_clicks > 0:        
-            #summary_tls table
-    #        for c in summary_columns:
-    #            summarydict.update({c['id']: "test"})
-            
-    #        summary_rows.append(summarydict)
-
-            
-    #    return summary_rows
-
-
-
-
-
 def blank_figure():
     fig = go.Figure(go.Scatter(x=[], y = []))
     fig.update_layout(template = "plotly_dark")
@@ -153,3 +131,5 @@ def blank_figure():
 #    fig.update_yaxes(showgrid = False, showticklabels = False, zeroline=False)
     
     return fig
+
+
