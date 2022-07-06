@@ -168,6 +168,17 @@ app.layout = html.Div(
 						        'textAlign': 'left',
 						        'border': '0px'
 						  },
+						  tooltip_header={
+						        'ciphersuites': 'Name of the TLS ciphersuite present in the handshake',
+						        'kexalgo': 'Name of the Key Exchange algorithm used',
+						        'authalgo': 'Name of the Authentication algorithm used to sign the handshake transcript',
+						        'hasech': 'Checks if Encrypted Client Hello extension is provided',
+						  		},
+						  css=[{
+       							'selector': '.dash-table-tooltip',
+        						'rule': 'background-color: grey; font-family: monospace; color: white'
+    					  }],
+    					  tooltip_duration=9000,
 				        ),  
 				        html.Br(),
 				        #we can use conditional formatting here: red for insecure, green for secure ciphers...
@@ -189,6 +200,14 @@ app.layout = html.Div(
 								'border': '0px'
 						  },
 						  data=[],
+						  tooltip_header={
+							        'insec_ciphersuites': 'Name of the TLS ciphersuite present in the handshake that is considered insecure, based on https://ciphersuite.info  ',							        
+							  		},
+							  css=[{
+       								'selector': '.dash-table-tooltip',
+        							'rule': 'background-color: grey; font-family: monospace; color: white'
+    						  }],
+    						  tooltip_duration=9000,
 				        ),
 				        html.Br(),
 				        html.H6("Performance Information:"),
@@ -201,6 +220,16 @@ app.layout = html.Div(
 							          #{'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}
 							          ], 
 					          data=[],
+					          tooltip_header={
+							        'hs_id': 'Sequential number of the Handshake',
+							        'hs_size': 'Handshake size is computed by the sum of KEX and Authentication messages',
+							        'hs_time': 'Handshake time is computed starting from the Client Hello message timestamp (provided by pcap file) until the client receives the Finished message from the Server. Note that this is the handshake time under the perspective of the client (the server also receives a finished message that ends the handshake).',
+							  		},
+							  css=[{
+       								'selector': '.dash-table-tooltip',
+        							'rule': 'background-color: grey; font-family: monospace; color: white'
+    						  }],
+    						  tooltip_duration=9000,							 
 					          style_as_list_view=False,
 					          style_header={
 							        'backgroundColor': '#222222',
