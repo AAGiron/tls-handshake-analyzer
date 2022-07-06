@@ -191,10 +191,32 @@ app.layout = html.Div(
 						  data=[],
 				        ),
 				        html.Br(),
-				        html.H6("Performance Information:"),						
+				        html.H6("Performance Information:"),
+				        dash_table.DataTable(
+					          id="summary_tls",
+					          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
+							          {'id': "hs_size", 'name': "HS Size (bytes)"},
+							          {'id': "hs_time", 'name': "HS Time (ms)"},
+							          #{'id': "avg_hs_time", 'name': "HS Avg. Time (ms)"},
+							          #{'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}
+							          ], 
+					          data=[],
+					          style_as_list_view=False,
+					          style_header={
+							        'backgroundColor': '#222222',
+							        'color': 'white',
+							        'textAlign': 'left',						        
+							  },
+							  style_data={
+							        'backgroundColor':  '#222222',
+							        'color': 'white',
+							        'textAlign': 'left'
+							  },
+					    ),
+					    html.Br(),					
 				        #Graphs
 				        #html.Div(id="size-graphs", className="row",				        
-							#children=[							
+							#children=[													
 						dcc.Graph(
 						        id='size-per-artifact',
 						        responsive=True, style={
@@ -224,32 +246,12 @@ app.layout = html.Div(
 					 #    ),					    					    			      
 					],
                 ), 
-                html.Br(),
-                html.Div(id="summary",
-					children=[
-	                	dash_table.DataTable(
-					          id="summary_tls",
-					          columns=[{'id': "hs_id", 'name': "Handshake (HS) Number"},
-							          {'id': "hs_size", 'name': "HS Size (bytes)"},
-							          {'id': "hs_time", 'name': "HS Time (ms)"},
-							          #{'id': "avg_hs_time", 'name': "HS Avg. Time (ms)"},
-							          #{'id': "stdev_hs_time", 'name': "HS Stdev. Time (ms)"}
-							          ], 
-					          data=[],
-					          style_as_list_view=False,
-					          style_header={
-							        'backgroundColor': '#222222',
-							        'color': 'white',
-							        'textAlign': 'left',						        
-							  },
-							  style_data={
-							        'backgroundColor':  '#222222',
-							        'color': 'white',
-							        'textAlign': 'left'
-							  },
-					    ),	
-                	]
-                ),               
+                #html.Br(),                
+                #html.Div(id="summary",
+				#	children=[
+	                		
+                	#]
+                #),               
                 html.Div(id='hidden-div-pcap', style={'display':'none'}),
                 html.Div(id='hidden-div-keylog', style={'display':'none'}),
                 html.Div(id='hidden-div-checklist', style={'display':'none'}),

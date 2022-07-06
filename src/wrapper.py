@@ -8,11 +8,18 @@ import tlspktreader as reader
 Wrapper for tls parsing functions. 
 """
 def startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check):	
-	pcapfile = "uploads/"+pcap_latest_file.split("/")[-1]
-	keyfile = "uploads/"+ tlskeylog_latest_file.split("/")[-1]
-	#pcapfile = UPLOAD_FOLDER+"/"+ pcap_latest_file.split("/")[-1]
-	#keyfile = UPLOAD_FOLDER+"/"+ tlskeylog_latest_file.split("/")[-1]
-	hslist = reader.readCaptureFile(pcapfile,keyfile)
-	print("Parsing completed.")
-	return hslist
+	if pcap_latest_file is not None:
+		pcapfile = "uploads/"+pcap_latest_file.split("/")[-1]
+		keyfile = "uploads/"+ tlskeylog_latest_file.split("/")[-1]
+	
+		hslist = reader.readCaptureFile(pcapfile,keyfile)
+		print("Parsing completed.")
+		return hslist
+	else:
+		return None
 	#remove temporary files?
+
+
+
+#pcapfile = UPLOAD_FOLDER+"/"+ pcap_latest_file.split("/")[-1]
+#keyfile = UPLOAD_FOLDER+"/"+ tlskeylog_latest_file.split("/")[-1]

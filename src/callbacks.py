@@ -59,6 +59,7 @@ def get_callbacks(app):
         Output('sec_info', 'data'),
         Output('insec_info', 'data'),
         Output('summary_tls', 'data'),
+        Output('size-per-artifact', 'figure'),
         Input('tlsanalyze-btn', 'n_clicks'),     
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
@@ -67,7 +68,7 @@ def get_callbacks(app):
         State('summary_tls', 'data'),
         State('summary_tls', 'columns'),     
         )
-    def update_tables(n_clicks, secinfo_rows, secinfo_columns,
+    def update_tables_and_figure(n_clicks, secinfo_rows, secinfo_columns,
                       insecinfo_rows, insecinfo_columns,
                       summary_rows, summary_columns):
         secinfodict = {"ciphersuites": "",
@@ -76,6 +77,9 @@ def get_callbacks(app):
                       "hasech": ""
                     }                    
         i = 0
+
+        fig1 = blank_figure()
+        figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953', '#fb9f3a', '#fdca26', '#f0f921'] #["darkslategrey","black", "gray","lightsteelblue"]
 
         #parse:        
         hslist = wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
@@ -99,28 +103,34 @@ def get_callbacks(app):
                 hstimeprint = "{:.2f}".format(hs.hstime)            
                 summary_rows.append({'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
             
-        return secinfo_rows, insecinfo_rows, summary_rows
 
+                #figure - size per message
+                x = ["CHello", "SHello", "Handshake Signature", "Certificates" ]
+                y = [hs.chello.size, hs.serverdata.size, 
+                    hs.certificateverify.signatureLength,
+                    hs.certificatedata.certsLength]
+                fig1.update_layout(title=dict(
+                                text='<b>TLS Message Sizes</b>',
+                                x=0.5,
+                                y=0.95,
+                                font=dict(                                    
+                                    size=20,                            
+                                )),
+                                font=dict(                                    
+                                    size=15,                                    
+                                ))
 
+                fig1.add_trace(go.Bar(
+                            name='HS #'+str(i),
+                            x=x, y=y,
+                            marker_color=(figcolors[i % len(figcolors)]),
+                            text=[ '%.0f' % elem for elem in y]
+                        ))                
+                fig1.update_layout(barmode='group') #bargroupgap=0.15, bargap=0.3, width=900)
+                fig1.update_yaxes(title="Size (bytes)",showline=True, linewidth=1, linecolor='black') #, range=rangeG, type="log") 
+                fig1.update_xaxes(showline=True, linewidth=1, linecolor='black')
 
-    # @app.callback(
-    #     Output('size-per-artifact', 'figure'),
-    #     Output('size-per-app-data', 'figure'),
-    #     Output('hs-timings', 'figure'),
-    #     Input('tlsanalyze-btn', 'n_clicks'),       
-    #     )
-    # def update_all_figures(n_clicks):
-    #     #fig1, fig2, fig3
-    #     fig1 = blank_figure()
-    #     fig2 = blank_figure()
-    #     fig3 = blank_figure()
-    #     if n_clicks > 0:
-    #         fig1.update_layout(title="Size Per Artifacts")
-    #         fig2.update_layout(title="Application data Payload")
-    #         fig3.update_layout(title="Handshake Timings")
-
-    #     return fig1, fig2, fig3
-
+        return secinfo_rows, insecinfo_rows, summary_rows, fig1
 
 
 
