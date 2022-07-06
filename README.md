@@ -6,6 +6,7 @@ TLS 1.3 Handshake analyzer
 
 - `sudo apt install tshark`
 - `sudo pip3 install pyshark`
+- `sudo pip3 install dash pandas dash-uploader`
 
 ## Usage
 
