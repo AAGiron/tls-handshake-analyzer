@@ -26,7 +26,7 @@ class Serverdata(object):
 			self.srandom = pkt.tls.handshake_random		
 		if hasattr(pkt.tls,'handshake_session_id'):
 			self.sessionID = pkt.tls.handshake_session_id
-		self.hsciphersuite = pkt.tls.handshake_ciphersuite
+		self.hsciphersuite = pkt.tls.handshake_ciphersuite.showname_value
 		self.size = int(pkt.tls.handshake_length)
 		info = Pktinfo()
 		info.parsePktInfo(pkt)

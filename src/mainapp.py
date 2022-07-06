@@ -17,20 +17,19 @@ app = dash.Dash(
     prevent_initial_callbacks=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
-app.title = "TLS 1.3 Analyzer"
+app.title = "TLS 1.3 Handshake Analyzer"
 
 server = app.server
 app.config.suppress_callback_exceptions = True
 
 # Path
 BASE_PATH = pathlib.Path(__file__).parent.resolve()
-#DATA_PATH = BASE_PATH.joinpath("data").resolve()
 
 #file upload configurations
 UPLOAD_FOLDER = r"uploads"
 du.configure_upload(app, UPLOAD_FOLDER,use_upload_id=False)
 
-# Get callbacks
+# Get callbacks from callbacks.py
 get_callbacks(app)
 
 """

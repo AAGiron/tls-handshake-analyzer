@@ -73,69 +73,74 @@ def get_callbacks(app):
                     #
 
         #parse:        
-        wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
+        hslist = wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
 
         #show results
         if n_clicks > 0:
             #sec_info table
-            for c in secinfo_columns:
-                secinfodict.update({c['id']: "red"})
+            for hs in hslist:
+
+                #for c in secinfo_columns:
+                secinfodict.update({'ciphersuites': hs.ciphersuite})
+                secinfodict.update({'kexalgo': hs.serverdata.getKEXNameFromGroup()})
+                secinfodict.update({'authalgo': hs.certificateverify.signatureAlgo})
+                secinfodict.update({'hasech': "Not implemented yet"})
             
-            secinfo_rows.append(secinfodict)
+                secinfo_rows.append(secinfodict)
 
             #insec information
             for c in insecinfo_columns:
-                insecinfo_rows.append({c['id']:'Insecure Test'})
+                insecinfo_rows.append({c['id']:'Not implemented yet'})
 
             
         return secinfo_rows, insecinfo_rows
 
 
 
-    @app.callback(
-        Output('size-per-artifact', 'figure'),
-        Output('size-per-app-data', 'figure'),
-        Output('hs-timings', 'figure'),
-        Input('tlsanalyze-btn', 'n_clicks'),       
-        )
-    def update_all_figures(n_clicks):
-        #fig1, fig2, fig3
-        fig1 = blank_figure()
-        fig2 = blank_figure()
-        fig3 = blank_figure()
-        if n_clicks > 0:
-            fig1.update_layout(title="Size Per Artifacts")
-            fig2.update_layout(title="Application data Payload")
-            fig3.update_layout(title="Handshake Timings")
+    # @app.callback(
+    #     Output('size-per-artifact', 'figure'),
+    #     Output('size-per-app-data', 'figure'),
+    #     Output('hs-timings', 'figure'),
+    #     Input('tlsanalyze-btn', 'n_clicks'),       
+    #     )
+    # def update_all_figures(n_clicks):
+    #     #fig1, fig2, fig3
+    #     fig1 = blank_figure()
+    #     fig2 = blank_figure()
+    #     fig3 = blank_figure()
+    #     if n_clicks > 0:
+    #         fig1.update_layout(title="Size Per Artifacts")
+    #         fig2.update_layout(title="Application data Payload")
+    #         fig3.update_layout(title="Handshake Timings")
 
-        return fig1, fig2, fig3
-
-
+    #     return fig1, fig2, fig3
 
 
-    @app.callback(
-        Output('summary_tls', 'data'),
-        Input('tlsanalyze-btn', 'n_clicks'),    
-        State('summary_tls', 'data'),
-        State('summary_tls', 'columns'),    
-        )
-    def update_summary_tables(n_clicks,summary_rows, summary_columns):
-        summarydict = {"hs_id": "",
-                      "total_hs_size": "",
-                      "total_hs_time": "",
-                      "avg_hs_time": "",
-                      "stdev_hs_time": ""
-                    }
 
-        if n_clicks > 0:        
+
+    #@app.callback(
+    #    Output('summary_tls', 'data'),
+    #    Input('tlsanalyze-btn', 'n_clicks'),    
+    #    State('summary_tls', 'data'),
+    #    State('summary_tls', 'columns'),    
+    #    )
+    #def update_summary_tables(n_clicks,summary_rows, summary_columns):
+    #    summarydict = {"hs_id": "",
+    #                  "total_hs_size": "",
+    #                  "total_hs_time": "",
+    #                  "avg_hs_time": "",
+    #                  "stdev_hs_time": ""
+    #                }
+
+    #    if n_clicks > 0:        
             #summary_tls table
-            for c in summary_columns:
-                summarydict.update({c['id']: "test"})
+    #        for c in summary_columns:
+    #            summarydict.update({c['id']: "test"})
             
-            summary_rows.append(summarydict)
+    #        summary_rows.append(summarydict)
 
             
-        return summary_rows
+    #    return summary_rows
 
 
 
