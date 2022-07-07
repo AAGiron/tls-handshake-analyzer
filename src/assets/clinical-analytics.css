@@ -123,6 +123,13 @@ H5, H3 {
 }
 
 
+
+.responsiveimg {
+  width: 97%;
+  height: auto;
+}
+
+
 /*
   ##Device = Most of the Smartphones Mobiles / ipad (Portrait)
   */

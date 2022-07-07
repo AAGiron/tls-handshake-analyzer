@@ -5,6 +5,8 @@ import plotly.graph_objs as go
 import dash_uploader as du
 import statistics
 import wrapper
+import requests
+import json
 from dash import dcc
 from dash import html
 from dash import dash_table
@@ -20,6 +22,7 @@ enable_ciphersuite_check = False
 def get_callbacks(app):
     """
         Dash Callbacks
+        First two are to set the file names (pcap and tls-keylog)
     """
     @du.callback(
         output=Output("hidden-div-pcap", "children"),
@@ -39,21 +42,27 @@ def get_callbacks(app):
         tlskeylog_latest_file = filenames[0]
         return None
 
-
+    """
+        Checklist callback to set user options
+    """
     @app.callback(
         Output("hidden-div-checklist", "children"),
         Input("checklist", "value"),    
         )
     def update_checklist_selection(check_values):
+        global enable_ciphersuite_check
+        global enable_ech
         if 'cipher' in check_values:
             enable_ciphersuite_check = True
+        else: 
+            enable_ciphersuite_check = False
         if 'ech' in check_values:
             enable_ech = True 
-
+        else:
+            enable_ech = False 
 
     """
         TLS Analyze (Start button)
-        Tables are updated by dicts 
     """
     @app.callback(
         Output('sec_info', 'data'),
@@ -80,6 +89,7 @@ def get_callbacks(app):
 
         fig1 = blank_figure()
         figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953', '#fb9f3a', '#fdca26', '#f0f921'] #["darkslategrey","black", "gray","lightsteelblue"]
+        hasInsecureCipher = False
 
         #parse:        
         hslist = wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
@@ -96,14 +106,24 @@ def get_callbacks(app):
                     'hasech': "Not implemented yet"})
 
                 #insec information
-                for c in insecinfo_columns:
-                    insecinfo_rows.append({c['id']:'Not implemented yet'})
+                if enable_ciphersuite_check:
+                    resp, status = postCiphersuite(hs.ciphersuite) 
+                    if status == 200:                    
+                        respjson = json.loads(resp.content)
+                        securityInfo = respjson[hs.ciphersuite.split(" ")[0]]['security']
+
+                        
+                        if "insecure" in securityInfo:
+                            insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered insecure!" })
+                            hasInsecureCipher = True
+                        if "weak" in securityInfo:
+                            insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered weak!" })
+                            hasInsecureCipher = True
 
                 #summary_tls table
                 hstimeprint = "{:.2f}".format(hs.hstime)            
                 summary_rows.append({'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
             
-
                 #figure - size per message
                 x = ["CHello", "SHello", "Handshake Signature", "Certificates" ]
                 y = [hs.chello.size, hs.serverdata.size, 
@@ -130,6 +150,9 @@ def get_callbacks(app):
                 fig1.update_yaxes(title="Size (bytes)",showline=True, linewidth=1, linecolor='black') #, range=rangeG, type="log") 
                 fig1.update_xaxes(showline=True, linewidth=1, linecolor='black')
 
+        if not hasInsecureCipher and enable_ciphersuite_check:
+            insecinfo_rows.append({'insec_ciphersuites': "No insecure ciphersuite found" })
+
         return secinfo_rows, insecinfo_rows, summary_rows, fig1
 
 
@@ -142,4 +165,8 @@ def blank_figure():
     
     return fig
 
+def postCiphersuite(ciphersuite):
 
+        inputURL = "https://ciphersuite.info/api/cs/"+ciphersuite.split(" ")[0]
+        resp = requests.post(inputURL)
+        return resp, resp.status_code

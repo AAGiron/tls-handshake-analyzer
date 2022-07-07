@@ -43,12 +43,13 @@ def description_card():
         id="description-card",
         children=[
             #html.H5("TLS 1.3 Analyzer"),
-            html.H3("TLS Handshake Analyzer"),
-            html.Div(
-                id="intro",
+            #html.H3("TLS 1.3 Handshake Analyzer"),
+            html.Img(src="assets/logo.png", className="responsiveimg"),
+            #html.Div(
+             #   id="intro",
                 #children="Reads .pcap/.pcapng capture file and the corresponding TLS keylog file to show security information (such as ciphersuite usage) and performance (in terms of handshake time and size of cryptographic objects).",
-                children="Explore security information and performance from TLS captures.",
-            ),
+                #children="Explore security information and performance from TLS captures.",
+            #),
         ],
     )
 
@@ -185,7 +186,7 @@ app.layout = html.Div(
 				        #https://dash.plotly.com/datatable/style
 						dash_table.DataTable(
 				          id="insec_info",
-				          columns=[{'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Found:"}], 
+				          columns=[{'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Found:", 'type': 'text'}], 
 				          style_as_list_view=True,
 				          style_header={
 						        'backgroundColor': '#222222',
@@ -199,6 +200,31 @@ app.layout = html.Div(
 						        'textAlign': 'left',
 								'border': '0px'
 						  },
+						  style_data_conditional=[
+				        	{
+				            	'if': {
+				                	'filter_query': '{insec_ciphersuites} contains "is considered insecure!"',
+				                	'column_id': 'insec_ciphersuites',
+				            	},
+				            	#'backgroundColor': 'dodgerblue',
+				            	'color': 'tomato'
+				        	},
+				        	{
+				            	'if': {
+				                	'filter_query': '{insec_ciphersuites} = "No insecure ciphersuite found"',
+				                	'column_id': 'insec_ciphersuites',
+				            	},
+				            	#'backgroundColor': 'dodgerblue',
+				            	'color': '#3D9970'
+				        	},
+				        	{
+				            	'if': {
+				                	'filter_query': '{insec_ciphersuites} contains "is considered weak!"',
+				                	'column_id': 'insec_ciphersuites'
+				            	},
+				            	'backgroundColor': '#FFDC00',
+				            	'color': 'white'
+				        	}],
 						  data=[],
 						  tooltip_header={
 							        'insec_ciphersuites': 'Name of the TLS ciphersuite present in the handshake that is considered insecure, based on https://ciphersuite.info  ',							        
