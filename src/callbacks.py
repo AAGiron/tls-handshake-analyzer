@@ -91,7 +91,7 @@ def get_callbacks(app):
         figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953', '#fb9f3a', '#fdca26', '#f0f921'] #["darkslategrey","black", "gray","lightsteelblue"]
         hasInsecureCipher = False
 
-        #parse:        
+        #parse:
         hslist = wrapper.startParsing(pcap_latest_file,tlskeylog_latest_file,enable_ech,enable_ciphersuite_check)
 
         #show results

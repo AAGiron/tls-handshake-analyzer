@@ -169,6 +169,13 @@ app.layout = html.Div(
 						        'textAlign': 'left',
 						        'border': '0px'
 						  },
+						  style_data_conditional=[
+						    {
+						        "if": {"state": "selected"},
+						        "backgroundColor": "inherit !important",
+						        "border": "inherit !important",
+						    }
+						  ],
 						  tooltip_header={
 						        'ciphersuites': 'Name of the TLS ciphersuite present in the handshake',
 						        'kexalgo': 'Name of the Key Exchange algorithm used',
@@ -224,7 +231,12 @@ app.layout = html.Div(
 				            	},
 				            	'backgroundColor': '#FFDC00',
 				            	'color': 'white'
-				        	}],
+				        	},
+				        	{
+						        "if": {"state": "selected"},
+						        "backgroundColor": "inherit !important",
+						        "border": "inherit !important",
+    						}],
 						  data=[],
 						  tooltip_header={
 							        'insec_ciphersuites': 'Name of the TLS ciphersuite present in the handshake that is considered insecure, based on https://ciphersuite.info  ',							        
@@ -267,6 +279,13 @@ app.layout = html.Div(
 							        'color': 'white',
 							        'textAlign': 'left'
 							  },
+							  style_data_conditional=[
+							    {
+							        "if": {"state": "selected"},
+							        "backgroundColor": "inherit !important",
+							        "border": "inherit !important",
+							    }
+							  ]
 					    ),
 					    html.Br(),					
 				        #Graphs
