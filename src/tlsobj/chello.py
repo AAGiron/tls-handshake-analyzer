@@ -4,7 +4,7 @@ from tlsobj.pktinfo import Pktinfo
 class CHello(object):
 	"""docstring for CHello"""
 	def __init__(self, keyshareGroup=None,keyshareLength=None,keyshareKeyExchange=None,
-				crandom=None,sessionID=None,size=None,pktinf=None):
+				crandom=None,sessionID=None,size=None,hasECH=None, pktinf=None):
 		super(CHello, self).__init__()
 		self.keyshareGroup = keyshareGroup
 		self.keyshareLength = keyshareLength
@@ -12,6 +12,7 @@ class CHello(object):
 		self.crandom = crandom
 		self.sessionID = sessionID
 		self.size = size #handshake_length
+		self.hasECHSupport = hasECH
 		self.pktinf = pktinf
 
 	def parseClientHello(self,pkt):
@@ -23,6 +24,11 @@ class CHello(object):
 		if hasattr(pkt,'handshake_session_id'):
 			self.sessionID = pkt.tls.handshake_session_id
 		self.size = int(pkt.tls.handshake_length)
+		if "Unknown type 65037" in str(pkt.tls):	#so far pyshark does not recognize ECH support
+			self.hasECHSupport = "ECH Extension found"
+		else:
+			self.hasECHSupport = "ECH Support not found"
+
 		info = Pktinfo()
 		info.parsePktInfo(pkt)
 		self.pktinf = info

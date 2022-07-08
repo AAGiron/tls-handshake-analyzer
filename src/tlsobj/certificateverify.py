@@ -21,3 +21,7 @@ class Certificateverify(object):
 		info = Pktinfo()
 		info.parsePktInfo(pkt)
 		self.pktinf = info
+
+	def setNotProvidedInfo(self):
+		self.signatureAlgo = " N/A (No TLS log file)"
+		self.signatureLength =  0 

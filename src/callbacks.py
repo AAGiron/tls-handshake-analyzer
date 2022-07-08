@@ -12,8 +12,8 @@ from dash import html
 from dash import dash_table
 from dash.dependencies import Input, Output, State
 
-pcap_latest_file = ""
-tlskeylog_latest_file = ""
+pcap_latest_file = None
+tlskeylog_latest_file = None
 
 #user options configurations
 enable_ech = False
@@ -99,11 +99,15 @@ def get_callbacks(app):
             
             for hs in hslist:
                 i = i + 1
-                #sec_info table                                        
-                secinfo_rows.append({'ciphersuites': hs.ciphersuite,
+                #sec_info table
+                if not enable_ech:
+                    textech = "-"
+                else:
+                    textech = hs.chello.hasECHSupport
+                secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
                     'kexalgo': hs.serverdata.getKEXNameFromGroup(),
                     'authalgo': hs.certificateverify.signatureAlgo,
-                    'hasech': "Not implemented yet"})
+                    'hasech': textech})
 
                 #insec information
                 if enable_ciphersuite_check:
