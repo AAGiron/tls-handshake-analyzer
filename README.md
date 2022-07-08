@@ -7,7 +7,7 @@ TLS 1.3 Handshake analyzer. Explore security information and performance from TL
 You can either use Docker or build and run on your own with:
 
 - `sudo apt install tshark`
-- `sudo pip3 install -r src/requirements.txt
+- `sudo pip3 install -r src/requirements.txt`
 
 Make sure you have full permissions in the capture file. There is no live-capture mode implemented (at least, not yet), so you need a pcap file. 
 
