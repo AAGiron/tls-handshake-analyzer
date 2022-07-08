@@ -1,14 +1,16 @@
 #adapted from https://github.com/plotly/dash-sample-apps/tree/main/apps/dash-clinical-analytics
 import time
-import dash
+
 import pandas as pd
 import plotly.graph_objs as go
 import dash_uploader as du
-import pathlib
+
+import dash
 from dash import dcc
 from dash import html
 from dash import dash_table
 from dash.dependencies import Input, Output, State
+
 from callbacks import get_callbacks
 from callbacks import blank_figure
 
@@ -18,12 +20,7 @@ app = dash.Dash(
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
 app.title = "TLS 1.3 Handshake Analyzer"
-
-server = app.server
 app.config.suppress_callback_exceptions = True
-
-# Path
-BASE_PATH = pathlib.Path(__file__).parent.resolve()
 
 #file upload configurations
 UPLOAD_FOLDER = r"uploads"
@@ -333,8 +330,3 @@ app.layout = html.Div(
         ),
     ],
 )
-
-
-# Run the server
-if __name__ == "__main__":
-    app.run_server(debug=False)

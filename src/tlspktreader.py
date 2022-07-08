@@ -1,6 +1,4 @@
-import argparse
 import os
-import sys
 import pyshark
 import statistics
 import tlsparser as tlspar
@@ -125,34 +123,3 @@ def printStats(handshakes):
             f"{hstimeprint:22} | ",
             f"{avgprint:15} | ",
             f"{stdevprint:15} |"  )
-
- 
-if __name__ == '__main__':
-    """
-        TLS Analyzer starting point
-    """
-    print("""  ________   _____    __  __                __     __          __           ___                __                     
- /_  __/ /  / ___/   / / / /___ _____  ____/ /____/ /_  ____ _/ /_____     /   |  ____  ____ _/ /_  ______  ___  _____
-  / / / /   \__ \   / /_/ / __ `/ __ \/ __  / ___/ __ \/ __ `/ //_/ _ \   / /| | / __ \/ __ `/ / / / /_  / / _ \/ ___/
- / / / /______/ /  / __  / /_/ / / / / /_/ (__  ) / / / /_/ / ,< /  __/  / ___ |/ / / / /_/ / / /_/ / / /_/  __/ /    
-/_/ /_____/____/  /_/ /_/\__,_/_/ /_/\__,_/____/_/ /_/\__,_/_/|_|\___/  /_/  |_/_/ /_/\__,_/_/\__, / /___/\___/_/     
-                                                                                             /____/                   
-  """)
-    ### Flags
-    parser = argparse.ArgumentParser(description='PCAP Pyshark reader')
-    parser.add_argument('--pcap', metavar='<pcap capture file>',
-                        help='pcap file to parse', required=True)
-    parser.add_argument('--tlskey', metavar='<tls key log file>',
-                        help='key log file to decrypt tls messages', required=False)
-
-    args = parser.parse_args()
-    
-    filename = args.pcap
-    if not os.path.isfile(filename):
-        print('"{}" does not exist.'.format(filename), file=sys.stderr)
-    else:
-        handshakeList = readCaptureFile(filename, args.tlskey)        
-        printStats(handshakeList)
-    print("End of processing.")
-
-
