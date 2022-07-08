@@ -3,6 +3,7 @@ import shlex
 import sys
 import tempfile
 import pyshark
+from tlsobj.handshake import Handshake 
 from tlsobj.chello import CHello
 from tlsobj.serverdata import Serverdata
 from tlsobj.certificate import Certificate
@@ -78,5 +79,58 @@ def getTLSObjectList(pkt):
 	return returnlist
 
 
+"""
+	Alternative entry point: returns CH-SH pairs when no keylog file is provided
+"""
+def getTLSPublicData(cap):
+	print("Start parsing without keylog file...")
+	tlsobjects = []#?	
+	for pkt in cap:
 
-	
+		if skipUnrelatedTLSPackets(pkt):
+			continue
+		
+		hstypes = getHSTypes(pkt)
+		for t in hstypes:
+
+			#CHello		
+			if t == 1:
+				chobj = CHello()
+				chobj.parseClientHello(pkt)			
+				tlsobjects.append(chobj)
+			#SHello and auth	
+			elif t == 2:
+				shobj = Serverdata()
+				shobj.parseSHello(pkt)
+				tlsobjects.append(shobj)
+
+	hslist = []
+	hs = Handshake()
+	hspair = 0
+	for ob in tlsobjects:
+		if isinstance(ob, CHello):
+			setattr(hs, "chello", ob)
+			hspair = 1
+		elif isinstance(ob, Serverdata):
+			setattr(hs, "serverdata", ob)
+			setattr(hs, "ciphersuite", ob.hsciphersuite)
+			#set empty certificate, cert verify and finished data
+			certobj = Certificate()
+			certverobj = Certificateverify()
+			finobj = Finished()
+			certobj.setNotProvidedInfo()
+			certverobj.setNotProvidedInfo()
+			finobj.setNotProvidedInfo()
+
+			setattr(hs, "certificatedata", certobj)
+			setattr(hs, "certificateverify", certverobj)
+			setattr(hs, "finished", finobj)
+			hspair = hspair+1
+
+		if hspair == 2:
+			hs.hstime = 0
+			hs.hssize = hs.chello.size +hs.serverdata.size
+			hslist.append(hs)
+			hs = Handshake()
+
+	return hslist

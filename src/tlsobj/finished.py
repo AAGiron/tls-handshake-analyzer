@@ -31,6 +31,8 @@ class Finished(object):
 		self.pktinf = info
 
 
+	def setNotProvidedInfo(self):
+		self.size =  0 
 
 
     

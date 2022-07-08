@@ -31,12 +31,16 @@ def readCaptureFile(filename, tlskeyfilename):
                                 override_prefs={'tls.keylog_file': tlskeyfilename})
     else:
         cap = pyshark.FileCapture(filename,display_filter="tls")
+        #adding a search for CH-SH pairs when no keylog file is provided
+        hslist = tlspar.getTLSPublicData(cap)
+        return hslist
+
 
     #temp handshake object
     hs = Handshake()
     sfinished = True
     hspackets = 0
-    print("Capture File opened. Start parsing...")
+    print("Start full parsing (pcap + keylog)...")
     for pkt in cap:
 
         if tlspar.skipUnrelatedTLSPackets(pkt):
@@ -108,10 +112,10 @@ def printStats(handshakes):
         print("Handshake time (ms): " + str((h.hstime))) #+ " ; epoch: "+ str((hstimeEpoch)))
         print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     
-    hstimeprint = "{:.6f}".format(totalhstime)
-    avgprint = "{:.6f}".format(totalhstime/len(handshakes))
+    hstimeprint = "{:.2f}".format(totalhstime)
+    avgprint = "{:.2f}".format(totalhstime/len(handshakes))
     try:
-        stdevprint = "{:.6f}".format(statistics.stdev(stdevsamples))
+        stdevprint = "{:.2f}".format(statistics.stdev(stdevsamples))
     except statistics.StatisticsError:
         stdevprint = float("NaN")
     print("")

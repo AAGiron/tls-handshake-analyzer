@@ -18,6 +18,10 @@ class Certificate(object):
 		info.parsePktInfo(pkt)
 		self.pktinf = info
 
+	def setNotProvidedInfo(self):		
+		self.certAlgorithm = " N/A (No TLS log file)"
+		self.certsLength =  0
+
 	def getOID(self):
 		return self.certAlgorithm
 
