@@ -27,10 +27,10 @@ def readCaptureFile(filename, tlskeyfilename):
     hslist = []
 
     if tlskeyfilename is not None:
-        cap = pyshark.FileCapture(filename,display_filter="tls", 
-                                override_prefs={'tls.keylog_file': tlskeyfilename})
+        cap = pyshark.FileCapture(filename,
+                                override_prefs={'tls.keylog_file': tlskeyfilename}, display_filter="tls")#, use_json=True
     else:
-        cap = pyshark.FileCapture(filename,display_filter="tls")
+        cap = pyshark.FileCapture(filename, display_filter="tls") #, use_json=True
         #adding a search for CH-SH pairs when no keylog file is provided
         hslist = tlspar.getTLSPublicData(cap)
         return hslist
