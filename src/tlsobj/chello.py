@@ -1,39 +1,42 @@
 import os
 from tlsobj.pktinfo import Pktinfo
 
+
 class CHello(object):
-	"""docstring for CHello"""
-	def __init__(self, keyshareGroup=None,keyshareLength=None,keyshareKeyExchange=None,
-				crandom=None,sessionID=None,size=None,hasECH=None, pktinf=None):
-		super(CHello, self).__init__()
-		self.keyshareGroup = keyshareGroup
-		self.keyshareLength = keyshareLength
-		self.keyshareKeyExchange = keyshareKeyExchange
-		self.crandom = crandom
-		self.sessionID = sessionID
-		self.size = size #handshake_length
-		self.hasECHSupport = hasECH
-		self.pktinf = pktinf
+    """docstring for CHello"""
 
-	def parseClientHello(self,pkt):
-		if hasattr(pkt.tls, 'handshake_extensions_key_share_group'):
-			self.keyshareGroup = pkt.tls.handshake_extensions_key_share_group
-			self.keyshareLength = pkt.tls.handshake_extensions_key_share_key_exchange_length	
-			self.keyshareKeyExchange = pkt.tls.handshake_extensions_key_share_key_exchange	
-		self.crandom = pkt.tls.handshake_random
-		if hasattr(pkt,'handshake_session_id'):
-			self.sessionID = pkt.tls.handshake_session_id
-		self.size = int(pkt.tls.handshake_length)
-		if "Unknown type 65037" in str(pkt.tls):	#so far pyshark does not recognize ECH support
-			self.hasECHSupport = "ECH Extension found"
-		else:
-			self.hasECHSupport = "ECH Support not found"
+    def __init__(self, keyshareGroup=None, keyshareLength=None, keyshareKeyExchange=None,
+                 crandom=None, sessionID=None, size=None, hasECH=None, pktinf=None):
+        super(CHello, self).__init__()
+        self.keyshareGroup = keyshareGroup
+        self.keyshareLength = keyshareLength
+        self.keyshareKeyExchange = keyshareKeyExchange
+        self.crandom = crandom
+        self.sessionID = sessionID
+        self.size = size  # handshake_length
+        self.hasECHSupport = hasECH
+        self.pktinf = pktinf
 
-		info = Pktinfo()
-		info.parsePktInfo(pkt)
-		self.pktinf = info
+    def parseClientHello(self, pkt):
+        if hasattr(pkt.tls, 'handshake_extensions_key_share_group'):
+            self.keyshareGroup = pkt.tls.handshake_extensions_key_share_group
+            self.keyshareLength = pkt.tls.handshake_extensions_key_share_key_exchange_length
+            self.keyshareKeyExchange = pkt.tls.handshake_extensions_key_share_key_exchange
+        self.crandom = pkt.tls.handshake_random
+        if hasattr(pkt, 'handshake_session_id'):
+            self.sessionID = pkt.tls.handshake_session_id
+        self.size = int(pkt.tls.handshake_length)
+        # so far pyshark does not recognize ECH support
+        if "Unknown type 65037" in str(pkt.tls):
+            self.hasECHSupport = "ECH Extension found"
+        else:
+            self.hasECHSupport = "ECH Support not found"
 
-	"""
+        info = Pktinfo()
+        info.parsePktInfo(pkt)
+        self.pktinf = info
+
+    """
 	
 	Result for packet data: 
 	[pkt.ip.src, pkt.tcp.port,

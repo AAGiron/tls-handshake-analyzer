@@ -4,9 +4,10 @@ TLS 1.3 Handshake analyzer. Explore security information and performance from TL
 
 ## Requirements
 
+You can either use Docker or build and run on your own with:
+
 - `sudo apt install tshark`
-- `sudo pip3 install pyshark`
-- `sudo pip3 install dash pandas dash-uploader`
+- `sudo pip3 install -r src/requirements.txt`
 
 Make sure you have full permissions in the capture file. There is no live-capture mode implemented (at least, not yet), so you need a pcap file. 
 
@@ -19,20 +20,23 @@ Make sure you have full permissions in the capture file. There is no live-captur
 
 ## Usage
 
-There are two interfaces: CLI and the Dash interface.
+There are two interfaces: CLI and the web interface.
 
 ### Command-Line Interface
 
-Execute like this: `python3 tlspktreader.py --pcap ../captures/tls13-rfc8446.pcap`
+Execute like this: `python3 src/main.py --pcap ../captures/tls13-rfc8446.pcap`
 
 Flags: 
 - `--pcap` path to the pcap/pcapng capture file
 - `--tlskey` path to the TLS Keylog file.
 
+### Web Interface
 
-### Dash App
+Execute the app: `python3 src/main.py --ide`. It will launch a Dash app in http://127.0.0.1:8050/. Deploy instructions are out of the scope of this README, but here is an [example](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps). Alternatively, you can use Docker as shown below.
 
-Execute the app: `python3 mainapp.py`. It will launch a Dash app in http://127.0.0.1:8050/. Deploy instructions are out of the scope of this README, but here is an [example](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps).
+### Docker
+
+Build the image with `docker build . -t tlsanalyzer` then run `docker run -p 8050:8050 tlsanalyzer:latest --ide` and go to `http://localhost:8050` to use the web interface. Also, you can use the CLI with `docker run tlsanalyzer:latest --pcap ../captures/tls13-rfc8446.pcap`.
 
 
 ## Output Information
