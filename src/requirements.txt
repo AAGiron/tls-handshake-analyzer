@@ -2,5 +2,6 @@ dash==2.5.1
 dash_uploader==0.6.0
 pandas==1.4.3
 plotly==5.9.0
-pyshark==0.5.0
+#pyshark==0.5.0
+pyshark
 requests==2.25.1
