@@ -11,6 +11,7 @@ from dash import dcc
 from dash import html
 from dash import dash_table
 from dash.dependencies import Input, Output, State
+from tlsobj.oid import nonQSKEX, nonQSAuth
 
 pcap_latest_file = None
 tlskeylog_latest_file = None
@@ -107,9 +108,20 @@ def get_callbacks(app):
                     textech = "-"
                 else:
                     textech = hs.chello.hasECHSupport
+                
+                textKEX = hs.serverdata.getKEXNameFromGroup()
+                if textKEX in nonQSKEX:
+                    textKEX = textKEX + " (Not QS)"
+                else:
+                    textKEX = textKEX + " (Is QS)"
+                textAuth = hs.certificateverify.signatureAlgo
+                if textAuth in nonQSAuth:
+                    textAuth = textAuth + " (Not QS)"
+                elif "N/A (No TLS log file)" not in textAuth:
+                    textAuth = textAuth + " (Is QS)"
                 secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
-                                     'kexalgo': hs.serverdata.getKEXNameFromGroup(),
-                                     'authalgo': hs.certificateverify.signatureAlgo,
+                                     'kexalgo': textKEX,
+                                     'authalgo': textAuth,
                                      'hasech': textech})
 
                 # insec information

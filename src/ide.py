@@ -175,7 +175,36 @@ app.layout = html.Div(
                                     "if": {"state": "selected"},
                                     "backgroundColor": "inherit !important",
                                     "border": "inherit !important",
-                                }
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{kexalgo} contains "Not QS"',
+                                        'column_id': 'kexalgo',
+                                    },
+                                    'color': 'tomato'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{kexalgo} contains "Is QS"',
+                                        'column_id': 'kexalgo',
+                                    },                                
+                                    'color': '#3D9970'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{authalgo} contains "Not QS"',
+                                        'column_id': 'authalgo',
+                                    },
+                                    'color': 'tomato'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{authalgo} contains "Is QS"',
+                                        'column_id': 'authalgo',
+                                    },
+                                    'color': '#3D9970'
+                                },
+
                             ],
                             tooltip_header={
                                 'ciphersuites': 'Name of the TLS ciphersuite present in the handshake',
@@ -187,11 +216,39 @@ app.layout = html.Div(
                                 'selector': '.dash-table-tooltip',
                                 'rule': 'background-color: grey; font-family: monospace; color: white'
                             }],
-                            tooltip_duration=9000,
+                            tooltip_duration=None,
+                            tooltip_conditional=[
+                            {
+                                'if': {
+                                    'filter_query': '{kexalgo} contains "Not QS"',                                    
+                                    'column_id': 'kexalgo'
+                                },
+                                'value':'Not considered Quantum-safe. More info here: https://en.wikipedia.org/wiki/Post-quantum_cryptography',
+                            },
+                            {
+                                'if': {
+                                    'filter_query': '{authalgo} contains "Not QS"',
+                                    'column_id': 'authalgo'
+                                },
+                                'value':'Not considered Quantum-safe. More info here:  https://en.wikipedia.org/wiki/Post-quantum_cryptography' 
+                            },
+                            {
+                                'if': { 
+                                    'filter_query': '{kexalgo} contains "Is QS"',                                    
+                                    'column_id': 'kexalgo'
+                                },
+                                'value':'"Is QS" means that the algorithm is considered secure against the quantum computer. More info here: https://en.wikipedia.org/wiki/Post-quantum_cryptography',
+                            },
+                            {
+                                'if': {
+                                    'filter_query': '{authalgo} contains "Is QS"',
+                                    'column_id': 'authalgo'
+                                },
+                                'value':'"Is QS" means that the algorithm is considered secure against the quantum computer. More info here: https://en.wikipedia.org/wiki/Post-quantum_cryptography',
+                                'type': 'markdown',
+                            }],
                         ),
                         html.Br(),
-                        # we can use conditional formatting here: red for insecure, green for secure ciphers...
-                        # https://dash.plotly.com/datatable/style
                         dash_table.DataTable(
                             id="insec_info",
                             columns=[
@@ -215,7 +272,6 @@ app.layout = html.Div(
                                         'filter_query': '{insec_ciphersuites} contains "is considered insecure!"',
                                         'column_id': 'insec_ciphersuites',
                                     },
-                                    # 'backgroundColor': 'dodgerblue',
                                     'color': 'tomato'
                                 },
                                 {
@@ -223,7 +279,6 @@ app.layout = html.Div(
                                         'filter_query': '{insec_ciphersuites} = "No insecure ciphersuite found"',
                                         'column_id': 'insec_ciphersuites',
                                     },
-                                    # 'backgroundColor': 'dodgerblue',
                                     'color': '#3D9970'
                                 },
                                 {
