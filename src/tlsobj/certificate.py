@@ -14,7 +14,7 @@ class Certificate(object):
         self.pktinf = pktinf
 
     def parseCertificate(self, pkt):
-        self.certAlgorithm = pkt.tls.x509af_algorithm_id
+        self.certAlgorithm = pkt.tls.x509af_algorithm_id        
         self.certsLength = int(pkt.tls.handshake_certificates_length)
         info = Pktinfo()
         info.parsePktInfo(pkt)
@@ -28,4 +28,7 @@ class Certificate(object):
         return self.certAlgorithm
 
     def getAuthNameFromOID(self):
-        return oid.Authmap[str(self.certAlgorithm)]
+        for a in self.certAlgorithm.fields:
+            if str(a.show) in oid.Authmap:
+                return oid.Authmap[str(a.show)]                    
+        return "Unknown"
