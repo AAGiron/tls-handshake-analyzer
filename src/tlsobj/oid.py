@@ -241,3 +241,9 @@ Authmap = dict([
     ("1.3.9999.6.9.7", " sphincsshake256256ssimple"),
     ("1.3.9999.6.9.8", " sphincsshake256256ssimple hybrid with p521"),
 ])
+
+
+nonQSKEX = "secp256r1 secp384r1 secp521r1 x25519 x448 ffdhe2048 ffdhe3072 ffdhe4096 ffdhe6144 ffdhe8192"
+nonQSAuth = "rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp521r1_sha512 rsa_pss_rsae_sha256 rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 ed25519 ed448 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha1 ecdsa_sha1"
+
+
