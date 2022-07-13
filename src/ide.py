@@ -149,7 +149,39 @@ app.layout = html.Div(
                 html.Div(
                     id="security_information",
                     children=[
-                        html.H6("Security Information:"),
+                        #html.H6("Security Information:"),
+                        # Graphs
+                        # html.Div(id="size-graphs", className="row",
+                        # children=[
+                        dcc.Graph(
+                            id='size-per-artifact',
+                            responsive=True, style={
+                                # 'display': 'block'
+                                # "width":400, "margin": 0,
+                                # 'display': 'inline-block'
+                                'display': 'block',
+                                'height': '450px'
+                            },
+                            figure=blank_figure()
+                        ),
+                        # dcc.Graph(
+                        #         id='size-per-app-data',
+                        #         responsive=True, style={
+                        #         		#"width":400, "margin": 0,
+                        # 				   #'display': 'inline-block'
+                        # 				   'display': 'block'
+                        # 		},
+                        #         figure=blank_figure()
+                        # ),
+                        # #]),
+                        #    dcc.Graph(
+                        #        id='hs-timings',
+                        #        responsive=True, style={
+                        # 			   'display': 'block'
+                        # 	},
+                        #        figure=blank_figure()
+                        #    ),
+                        html.Br(),
                         dash_table.DataTable(
                             id="sec_info",
                             style_as_list_view=True,
@@ -164,13 +196,13 @@ app.layout = html.Div(
                                 'backgroundColor': '#222222',
                                 'color': 'white',
                                 'textAlign': 'left',
-                                'border': '0px'
+                                #'border': '0px'
                             },
                             style_data={
                                 'backgroundColor':  '#222222',
                                                     'color': 'white',
                                 'textAlign': 'left',
-                                'border': '0px'
+                                #'border': '0px'
                             },
                             style_data_conditional=[
                                 {
@@ -306,38 +338,6 @@ app.layout = html.Div(
                             }],
                             tooltip_duration=9000,
                         ),
-                        html.Br(),
-                        # Graphs
-                        # html.Div(id="size-graphs", className="row",
-                        # children=[
-                        dcc.Graph(
-                            id='size-per-artifact',
-                            responsive=True, style={
-                                # 'display': 'block'
-                                # "width":400, "margin": 0,
-                                # 'display': 'inline-block'
-                                'display': 'block',
-                                'height': '450px'
-                            },
-                            figure=blank_figure()
-                        ),
-                        # dcc.Graph(
-                        #         id='size-per-app-data',
-                        #         responsive=True, style={
-                        #         		#"width":400, "margin": 0,
-                        # 				   #'display': 'inline-block'
-                        # 				   'display': 'block'
-                        # 		},
-                        #         figure=blank_figure()
-                        # ),
-                        # #]),
-                        #    dcc.Graph(
-                        #        id='hs-timings',
-                        #        responsive=True, style={
-                        # 			   'display': 'block'
-                        # 	},
-                        #        figure=blank_figure()
-                        #    ),
                         html.Br(),
                         html.H6(
                             "Performance Information:"),
