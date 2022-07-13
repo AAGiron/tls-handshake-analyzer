@@ -71,25 +71,26 @@ def get_callbacks(app):
         Output('insec_info', 'data'),
         Output('summary_tls', 'data'),
         Output('size-per-artifact', 'figure'),
+        Output('reset-btn', 'n_clicks'),
         Input('tlsanalyze-btn', 'n_clicks'),
+        Input('reset-btn', 'n_clicks'),
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
         State('insec_info', 'data'),
         State('insec_info', 'columns'),
-        State('summary_tls', 'data'),
-        State('summary_tls', 'columns'),
+        State('summary_tls', 'data'),        
+        State('summary_tls', 'columns'),  
     )
-    def update_tables_and_figure(n_clicks, secinfo_rows, secinfo_columns,
+    def update_tables_and_figure(n_clicks, reset_click, secinfo_rows, secinfo_columns,
                                  insecinfo_rows, insecinfo_columns,
-                                 summary_rows, summary_columns):
-        secinfodict = {"ciphersuites": "",
-                       "kexalgo": "",
-                       "authalgo": "",
-                       "hasech": ""
-                       }
+                                 summary_rows, summary_columns):        
         i = 0
-
         fig1 = blank_figure()
+
+        #reset button
+        if reset_click > 0:
+            return [], [], [], fig1, 0
+
         figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953',
                      '#fb9f3a', '#fdca26', '#f0f921']  # ["darkslategrey","black", "gray","lightsteelblue"]
         hasInsecureCipher = False
@@ -180,7 +181,7 @@ def get_callbacks(app):
             insecinfo_rows.append(
                 {'insec_ciphersuites': "No insecure ciphersuite found"})
 
-        return secinfo_rows, insecinfo_rows, summary_rows, fig1
+        return secinfo_rows, insecinfo_rows, summary_rows, fig1,0
 
 
 def blank_figure():

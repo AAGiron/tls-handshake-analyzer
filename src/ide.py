@@ -107,8 +107,10 @@ def generate_control_card():
             html.Br(),
             html.Div(
                 id="reset-btn-outer",
-                children=  # html.Button(id="reset-btn", children="Reset", n_clicks=0),
-                html.Button(id="tlsanalyze-btn", children="Start!", n_clicks=0)
+                children=  [# html.Button(id="reset-btn", children="Reset", n_clicks=0),
+                html.Button(id="tlsanalyze-btn", children="Start!", n_clicks=0),
+                html.Button(id="reset-btn", children="Reset", n_clicks=0)
+                ]
             ),
         ],
     )
