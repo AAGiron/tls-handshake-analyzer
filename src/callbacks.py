@@ -106,18 +106,18 @@ def get_callbacks(app):
                 i = i + 1
                 # sec_info table
                 if not enable_ech:
-                    textech = "-"
+                    textech = "No"
                 else:
-                    textech = hs.chello.hasECHSupport
+                    textech = "Yes"
                 
                 textKEX = hs.serverdata.getKEXNameFromGroup()
                 if textKEX in nonQSKEX:
-                    textKEX = textKEX + " (Not QS)"
+                    textKEX = textKEX + " (Non-QS)"
                 else:
                     textKEX = textKEX + " (Is QS)"
                 textAuth = hs.certificateverify.signatureAlgo
                 if textAuth in nonQSAuth:
-                    textAuth = textAuth + " (Not QS)"
+                    textAuth = textAuth + " (Non-QS)"
                 elif "N/A (No TLS log file)" not in textAuth:
                     textAuth = textAuth + " (Is QS)"
                 secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],

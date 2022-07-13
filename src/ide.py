@@ -158,7 +158,7 @@ app.layout = html.Div(
                                       'name': "KEX Algo."},
                                      {'id': "authalgo",
                                       'name': "Auth. Algo."},
-                                     {'id': "hasech", 'name': "Has ECH Support?"}],
+                                     {'id': "hasech", 'name': "Supports ECH?"}],
                             data=[],
                             style_header={
                                 'backgroundColor': '#222222',
@@ -307,6 +307,38 @@ app.layout = html.Div(
                             tooltip_duration=9000,
                         ),
                         html.Br(),
+                        # Graphs
+                        # html.Div(id="size-graphs", className="row",
+                        # children=[
+                        dcc.Graph(
+                            id='size-per-artifact',
+                            responsive=True, style={
+                                # 'display': 'block'
+                                # "width":400, "margin": 0,
+                                # 'display': 'inline-block'
+                                'display': 'block',
+                                'height': '450px'
+                            },
+                            figure=blank_figure()
+                        ),
+                        # dcc.Graph(
+                        #         id='size-per-app-data',
+                        #         responsive=True, style={
+                        #         		#"width":400, "margin": 0,
+                        # 				   #'display': 'inline-block'
+                        # 				   'display': 'block'
+                        # 		},
+                        #         figure=blank_figure()
+                        # ),
+                        # #]),
+                        #    dcc.Graph(
+                        #        id='hs-timings',
+                        #        responsive=True, style={
+                        # 			   'display': 'block'
+                        # 	},
+                        #        figure=blank_figure()
+                        #    ),
+                        html.Br(),
                         html.H6(
                             "Performance Information:"),
                         dash_table.DataTable(
@@ -349,37 +381,6 @@ app.layout = html.Div(
                                 }
                             ]
                         ),
-                        html.Br(),
-                        # Graphs
-                        # html.Div(id="size-graphs", className="row",
-                        # children=[
-                        dcc.Graph(
-                            id='size-per-artifact',
-                            responsive=True, style={
-                                # 'display': 'block'
-                                # "width":400, "margin": 0,
-                                # 'display': 'inline-block'
-                                'display': 'block'
-                            },
-                            figure=blank_figure()
-                        ),
-                        # dcc.Graph(
-                        #         id='size-per-app-data',
-                        #         responsive=True, style={
-                        #         		#"width":400, "margin": 0,
-                        # 				   #'display': 'inline-block'
-                        # 				   'display': 'block'
-                        # 		},
-                        #         figure=blank_figure()
-                        # ),
-                        # #]),
-                        #    dcc.Graph(
-                        #        id='hs-timings',
-                        #        responsive=True, style={
-                        # 			   'display': 'block'
-                        # 	},
-                        #        figure=blank_figure()
-                        #    ),
                     ],
                 ),
                 # html.Br(),
