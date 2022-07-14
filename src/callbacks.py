@@ -16,10 +16,6 @@ from tlsobj.oid import nonQSKEX, nonQSAuth
 pcap_latest_file = None
 tlskeylog_latest_file = None
 
-# user options configurations
-enable_ech = False
-enable_ciphersuite_check = False
-
 
 def get_callbacks(app):
     """
@@ -44,24 +40,6 @@ def get_callbacks(app):
         tlskeylog_latest_file = filenames[0]
         return None
 
-    """
-        Checklist callback to set user options
-    """
-    @app.callback(
-        Output("hidden-div-checklist", "children"),
-        Input("checklist", "value"),
-    )
-    def update_checklist_selection(check_values):
-        global enable_ciphersuite_check
-        global enable_ech
-        if 'cipher' in check_values:
-            enable_ciphersuite_check = True
-        else:
-            enable_ciphersuite_check = False
-        if 'ech' in check_values:
-            enable_ech = True
-        else:
-            enable_ech = False
 
     """
         TLS Analyze (Start button)
@@ -74,6 +52,7 @@ def get_callbacks(app):
         Output('reset-btn', 'n_clicks'),
         Input('tlsanalyze-btn', 'n_clicks'),
         Input('reset-btn', 'n_clicks'),
+        Input("checklist", "value"),
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
         State('insec_info', 'data'),
@@ -81,14 +60,24 @@ def get_callbacks(app):
         State('summary_tls', 'data'),        
         State('summary_tls', 'columns'),  
     )
-    def update_tables_and_figure(n_clicks, reset_click, secinfo_rows, secinfo_columns,
+    def update_tables_and_figure(n_clicks, reset_click, check_values, secinfo_rows, secinfo_columns,
                                  insecinfo_rows, insecinfo_columns,
                                  summary_rows, summary_columns):        
+
         i = 0
         fig1 = blank_figure()
 
+        if 'cipher' in check_values:
+            enable_ciphersuite_check = True
+        else:
+            enable_ciphersuite_check = False
+        if 'ech' in check_values:
+            enable_ech = True
+        else:
+            enable_ech = False
+
         #reset button
-        if reset_click > 0:
+        if reset_click > 0 or pcap_latest_file is None:
             return [], [], [], fig1, 0
 
         figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953',
