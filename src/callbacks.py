@@ -102,80 +102,81 @@ def get_callbacks(app):
         # show results
         if n_clicks > 0:
 
-            for hs in hslist:
-                i = i + 1
-                # sec_info table
-                if not enable_ech:
-                    textech = "No"
-                else:
-                    textech = "Yes"
-                
-                textKEX = hs.serverdata.getKEXNameFromGroup()
-                if textKEX in nonQSKEX:
-                    textKEX = textKEX + " (Non-QS)"
-                else:
-                    textKEX = textKEX + " (Is QS)"
-                textAuth = hs.certificateverify.signatureAlgo
-                if textAuth in nonQSAuth:
-                    textAuth = textAuth + " (Non-QS)"
-                elif "N/A (No TLS log file)" not in textAuth:
-                    textAuth = textAuth + " (Is QS)"
-                secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
-                                     'kexalgo': textKEX,
-                                     'authalgo': textAuth,
-                                     'hasech': textech})
+            if isinstance(hslist, list):
+                for hs in hslist:
+                    i = i + 1
+                    # sec_info table
+                    if not enable_ech:
+                        textech = "No"
+                    else:
+                        textech = "Yes"
+                    
+                    textKEX = hs.serverdata.getKEXNameFromGroup()
+                    if textKEX in nonQSKEX:
+                        textKEX = textKEX + " (Non-QS)"
+                    else:
+                        textKEX = textKEX + " (Is QS)"
+                    textAuth = hs.certificateverify.signatureAlgo
+                    if textAuth in nonQSAuth:
+                        textAuth = textAuth + " (Non-QS)"
+                    elif "N/A (No TLS log file)" not in textAuth:
+                        textAuth = textAuth + " (Is QS)"
+                    secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
+                                         'kexalgo': textKEX,
+                                         'authalgo': textAuth,
+                                         'hasech': textech})
 
-                # insec information
-                if enable_ciphersuite_check:
-                    resp, status = postCiphersuite(hs.ciphersuite)
-                    if status == 200:
-                        respjson = json.loads(resp.content)
-                        securityInfo = respjson[hs.ciphersuite.split(" ")[
-                            0]]['security']
+                    # insec information
+                    if enable_ciphersuite_check:
+                        resp, status = postCiphersuite(hs.ciphersuite)
+                        if status == 200:
+                            respjson = json.loads(resp.content)
+                            securityInfo = respjson[hs.ciphersuite.split(" ")[
+                                0]]['security']
 
-                        if "insecure" in securityInfo:
-                            insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[
-                                                  0] + " is considered insecure!"})
-                            hasInsecureCipher = True
-                        if "weak" in securityInfo:
-                            insecinfo_rows.append(
-                                {'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered weak!"})
-                            hasInsecureCipher = True
+                            if "insecure" in securityInfo:
+                                insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[
+                                                      0] + " is considered insecure!"})
+                                hasInsecureCipher = True
+                            if "weak" in securityInfo:
+                                insecinfo_rows.append(
+                                    {'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered weak!"})
+                                hasInsecureCipher = True
 
-                # summary_tls table
-                hstimeprint = "{:.2f}".format(hs.hstime)
-                summary_rows.append(
-                    {'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
+                    # summary_tls table
+                    hstimeprint = "{:.2f}".format(hs.hstime)
+                    summary_rows.append(
+                        {'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
 
-                # figure - size per message
-                x = ["CHello", "SHello", "Handshake Signature", "Certificates"]
-                y = [hs.chello.size, hs.serverdata.size,
-                     hs.certificateverify.signatureLength,
-                     hs.certificatedata.certsLength]
-                fig1.update_layout(title=dict(
-                    text='<b>TLS Message Sizes</b>',
-                    x=0.5,
-                    y=0.95,
-                    font=dict(
-                        size=20,
-                    )),
-                    font=dict(
-                    size=15,
-                ))
+                    # figure - size per message
+                    x = ["CHello", "SHello", "Handshake Signature", "Certificates"]
+                    y = [hs.chello.size, hs.serverdata.size,
+                         hs.certificateverify.signatureLength,
+                         hs.certificatedata.certsLength]
+                    fig1.update_layout(title=dict(
+                        text='<b>TLS Message Sizes</b>',
+                        x=0.5,
+                        y=0.95,
+                        font=dict(
+                            size=20,
+                        )),
+                        font=dict(
+                        size=15,
+                    ))
 
-                fig1.add_trace(go.Bar(
-                    name='HS #'+str(i),
-                    x=x, y=y,
-                    marker_color=(figcolors[i % len(figcolors)]),
-                    text=['%.0f' % elem for elem in y]
-                ))
-                # bargroupgap=0.15, bargap=0.3, width=900)
-                fig1.update_layout(barmode='group')
-                # , range=rangeG, type="log")
-                fig1.update_yaxes(title="Size (bytes)",
-                                  showline=True, linewidth=1, linecolor='black')
-                fig1.update_xaxes(showline=True, linewidth=1,
-                                  linecolor='black')
+                    fig1.add_trace(go.Bar(
+                        name='HS #'+str(i),
+                        x=x, y=y,
+                        marker_color=(figcolors[i % len(figcolors)]),
+                        text=['%.0f' % elem for elem in y]
+                    ))
+                    # bargroupgap=0.15, bargap=0.3, width=900)
+                    fig1.update_layout(barmode='group')
+                    # , range=rangeG, type="log")
+                    fig1.update_yaxes(title="Size (bytes)",
+                                      showline=True, linewidth=1, linecolor='black')
+                    fig1.update_xaxes(showline=True, linewidth=1,
+                                      linecolor='black')
 
         if not hasInsecureCipher and enable_ciphersuite_check:
             insecinfo_rows.append(
