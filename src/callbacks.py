@@ -7,6 +7,9 @@ import statistics
 import wrapper
 import requests
 import json
+
+import statistics
+
 from dash import dcc
 from dash import html
 from dash import dash_table
@@ -15,10 +18,6 @@ from tlsobj.oid import nonQSKEX, nonQSAuth
 
 pcap_latest_file = None
 tlskeylog_latest_file = None
-
-# user options configurations
-enable_ech = False
-enable_ciphersuite_check = False
 
 
 def get_callbacks(app):
@@ -44,24 +43,6 @@ def get_callbacks(app):
         tlskeylog_latest_file = filenames[0]
         return None
 
-    """
-        Checklist callback to set user options
-    """
-    @app.callback(
-        Output("hidden-div-checklist", "children"),
-        Input("checklist", "value"),
-    )
-    def update_checklist_selection(check_values):
-        global enable_ciphersuite_check
-        global enable_ech
-        if 'cipher' in check_values:
-            enable_ciphersuite_check = True
-        else:
-            enable_ciphersuite_check = False
-        if 'ech' in check_values:
-            enable_ech = True
-        else:
-            enable_ech = False
 
     """
         TLS Analyze (Start button)
@@ -70,26 +51,40 @@ def get_callbacks(app):
         Output('sec_info', 'data'),
         Output('insec_info', 'data'),
         Output('summary_tls', 'data'),
+        Output('statistics', 'data'),
         Output('size-per-artifact', 'figure'),
         Output('reset-btn', 'n_clicks'),
         Input('tlsanalyze-btn', 'n_clicks'),
         Input('reset-btn', 'n_clicks'),
+        Input("checklist", "value"),
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
+        State('statistics', 'data'),
         State('insec_info', 'data'),
         State('insec_info', 'columns'),
         State('summary_tls', 'data'),        
         State('summary_tls', 'columns'),  
     )
-    def update_tables_and_figure(n_clicks, reset_click, secinfo_rows, secinfo_columns,
+    def update_tables_and_figure(n_clicks, reset_click, check_values, secinfo_rows, secinfo_columns, statistics_data,
                                  insecinfo_rows, insecinfo_columns,
                                  summary_rows, summary_columns):        
+
         i = 0
         fig1 = blank_figure()
 
+        enable_ciphersuite_check = False
+        enable_ech = False
+        
+        if isinstance(check_values, list):
+            if 'cipher' in check_values:
+                enable_ciphersuite_check = True
+
+            if 'ech' in check_values:
+                enable_ech = True
+
         #reset button
-        if reset_click > 0:
-            return [], [], [], fig1, 0
+        if reset_click > 0 or pcap_latest_file is None:
+            return [], [], [], [], fig1, 0
 
         figcolors = ['#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b', '#ed7953',
                      '#fb9f3a', '#fdca26', '#f0f921']  # ["darkslategrey","black", "gray","lightsteelblue"]
@@ -101,87 +96,99 @@ def get_callbacks(app):
 
         # show results
         if n_clicks > 0:
+            if isinstance(hslist, list):
+                for hs in hslist:
+                    i = i + 1
+                    # sec_info table
+                    if not enable_ech:
+                        textech = "No"
+                    else:
+                        textech = "Yes"
+                    
+                    textKEX = hs.serverdata.getKEXNameFromGroup()
+                    if textKEX in nonQSKEX:
+                        textKEX = textKEX + " (Non-QS)"
+                    else:
+                        textKEX = textKEX + " (Is QS)"
+                    textAuth = hs.certificateverify.signatureAlgo
+                    if textAuth in nonQSAuth:
+                        textAuth = textAuth + " (Non-QS)"
+                    elif "N/A (No TLS log file)" not in textAuth:
+                        textAuth = textAuth + " (Is QS)"
+                    secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
+                                         'kexalgo': textKEX,
+                                         'authalgo': textAuth,
+                                         'hasech': textech})
 
-            for hs in hslist:
-                i = i + 1
-                # sec_info table
-                if not enable_ech:
-                    textech = "-"
-                else:
-                    textech = hs.chello.hasECHSupport
-                
-                textKEX = hs.serverdata.getKEXNameFromGroup()
-                if textKEX in nonQSKEX:
-                    textKEX = textKEX + " (Not QS)"
-                else:
-                    textKEX = textKEX + " (Is QS)"
-                textAuth = hs.certificateverify.signatureAlgo
-                if textAuth in nonQSAuth:
-                    textAuth = textAuth + " (Not QS)"
-                elif "N/A (No TLS log file)" not in textAuth:
-                    textAuth = textAuth + " (Is QS)"
-                secinfo_rows.append({'ciphersuites': hs.ciphersuite.split(" ")[0],
-                                     'kexalgo': textKEX,
-                                     'authalgo': textAuth,
-                                     'hasech': textech})
+                    # insec information
+                    if enable_ciphersuite_check:
+                        resp, status = postCiphersuite(hs.ciphersuite)
+                        if status == 200:
+                            respjson = json.loads(resp.content)
+                            securityInfo = respjson[hs.ciphersuite.split(" ")[
+                                0]]['security']
 
-                # insec information
-                if enable_ciphersuite_check:
-                    resp, status = postCiphersuite(hs.ciphersuite)
-                    if status == 200:
-                        respjson = json.loads(resp.content)
-                        securityInfo = respjson[hs.ciphersuite.split(" ")[
-                            0]]['security']
+                            if "insecure" in securityInfo:
+                                insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[
+                                                      0] + " is considered insecure!"})
+                                hasInsecureCipher = True
+                            if "weak" in securityInfo:
+                                insecinfo_rows.append(
+                                    {'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered weak!"})
+                                hasInsecureCipher = True
 
-                        if "insecure" in securityInfo:
-                            insecinfo_rows.append({'insec_ciphersuites': hs.ciphersuite.split(" ")[
-                                                  0] + " is considered insecure!"})
-                            hasInsecureCipher = True
-                        if "weak" in securityInfo:
-                            insecinfo_rows.append(
-                                {'insec_ciphersuites': hs.ciphersuite.split(" ")[0] + " is considered weak!"})
-                            hasInsecureCipher = True
+                    # summary_tls table
+                    hstimeprint = "{:.2f}".format(hs.hstime)
+                    summary_rows.append(
+                        {'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
 
-                # summary_tls table
-                hstimeprint = "{:.2f}".format(hs.hstime)
-                summary_rows.append(
-                    {'hs_id': i, 'hs_size': hs.hssize, 'hs_time': hstimeprint})
+                    # figure - size per message
+                    x = ["CHello", "SHello", "Handshake Signature", "Certificates"]
+                    y = [hs.chello.size, hs.serverdata.size,
+                         hs.certificateverify.signatureLength,
+                         hs.certificatedata.certsLength]
+                    fig1.update_layout(title=dict(
+                        text='<b>TLS Message Sizes</b>',
+                        x=0.5,
+                        y=0.95,
+                        font=dict(
+                            size=20,
+                        )),
+                        font=dict(
+                        size=15,
+                    ))
 
-                # figure - size per message
-                x = ["CHello", "SHello", "Handshake Signature", "Certificates"]
-                y = [hs.chello.size, hs.serverdata.size,
-                     hs.certificateverify.signatureLength,
-                     hs.certificatedata.certsLength]
-                fig1.update_layout(title=dict(
-                    text='<b>TLS Message Sizes</b>',
-                    x=0.5,
-                    y=0.95,
-                    font=dict(
-                        size=20,
-                    )),
-                    font=dict(
-                    size=15,
-                ))
+                    fig1.add_trace(go.Bar(
+                        name='HS #'+str(i),
+                        x=x, y=y,
+                        marker_color=(figcolors[i % len(figcolors)]),
+                        text=['%.0f' % elem for elem in y]
+                    ))
+                    # bargroupgap=0.15, bargap=0.3, width=900)
+                    fig1.update_layout(barmode='group')
+                    # , range=rangeG, type="log")
+                    fig1.update_yaxes(title="Size (bytes)",
+                                      showline=True, linewidth=1, linecolor='black')
+                    fig1.update_xaxes(showline=True, linewidth=1,
+                                      linecolor='black')
+                                      
+                if len(summary_rows) > 0:
+                    mean_size = statistics.mean(float(i['hs_size']) for i in summary_rows)
+                    stdev_size = statistics.stdev(float(i['hs_size']) for i in summary_rows) if len(summary_rows) > 1 else 0
 
-                fig1.add_trace(go.Bar(
-                    name='HS #'+str(i),
-                    x=x, y=y,
-                    marker_color=(figcolors[i % len(figcolors)]),
-                    text=['%.0f' % elem for elem in y]
-                ))
-                # bargroupgap=0.15, bargap=0.3, width=900)
-                fig1.update_layout(barmode='group')
-                # , range=rangeG, type="log")
-                fig1.update_yaxes(title="Size (bytes)",
-                                  showline=True, linewidth=1, linecolor='black')
-                fig1.update_xaxes(showline=True, linewidth=1,
-                                  linecolor='black')
+                    mean_time = statistics.mean(float(i['hs_time']) for i in summary_rows)
+                    stdev_time = statistics.stdev(float(i['hs_time']) for i in summary_rows) if len(summary_rows) > 1 else 0
+                    
+                    statistics_data.append({'mean_size': round(mean_size, 2),
+                                            'stdev_size': round(stdev_size, 2),
+                                            'mean_time': round(mean_time, 2),
+                                            'stdev_time': round(stdev_time, 2)})
 
         if not hasInsecureCipher and enable_ciphersuite_check:
             insecinfo_rows.append(
                 {'insec_ciphersuites': "No insecure ciphersuite found"})
 
-        return secinfo_rows, insecinfo_rows, summary_rows, fig1,0
+        return secinfo_rows, insecinfo_rows, summary_rows, statistics_data, fig1, 0
 
 
 def blank_figure():

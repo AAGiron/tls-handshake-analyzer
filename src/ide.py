@@ -149,7 +149,62 @@ app.layout = html.Div(
                 html.Div(
                     id="security_information",
                     children=[
-                        html.H6("Security Information:"),
+                        #html.H6("Security Information:"),
+                        # Graphs
+                        # html.Div(id="size-graphs", className="row",
+                        # children=[
+                        dcc.Graph(
+                            id='size-per-artifact',
+                            responsive=True, style={
+                                # 'display': 'block'
+                                # "width":400, "margin": 0,
+                                # 'display': 'inline-block'
+                                'display': 'block',
+                                'height': '450px'
+                            },
+                            figure=blank_figure()
+                        ),
+                        # dcc.Graph(
+                        #         id='size-per-app-data',
+                        #         responsive=True, style={
+                        #         		#"width":400, "margin": 0,
+                        # 				   #'display': 'inline-block'
+                        # 				   'display': 'block'
+                        # 		},
+                        #         figure=blank_figure()
+                        # ),
+                        # #]),
+                        #    dcc.Graph(
+                        #        id='hs-timings',
+                        #        responsive=True, style={
+                        # 			   'display': 'block'
+                        # 	},
+                        #        figure=blank_figure()
+                        #    ),
+                        html.Br(),
+                        html.H6(
+                            "Statistics:"),
+                        dash_table.DataTable(
+                            id="statistics",
+                            style_as_list_view=True,
+                            columns=[{"id": "mean_size", "name": "Mean HS Size (bytes)"}, {"id": "stdev_size", "name": "STDEV HS Size (bytes)"}, {"id": "mean_time", "name": "Mean HS Time (ms)"}, {"id": "stdev_time", "name": "STDEV HS Time (ms)"}],
+                            data=[],
+                            style_header={
+                                'backgroundColor': '#222222',
+                                'color': 'white',
+                                'textAlign': 'left',
+                                #'border': '0px'
+                            },
+                            style_data={
+                                'backgroundColor':  '#222222',
+                                                    'color': 'white',
+                                'textAlign': 'left',
+                                #'border': '0px'
+                            },
+                        ),
+                        html.Br(),
+                        html.H6(
+                            "Security Information:"),
                         dash_table.DataTable(
                             id="sec_info",
                             style_as_list_view=True,
@@ -158,19 +213,19 @@ app.layout = html.Div(
                                       'name': "KEX Algo."},
                                      {'id': "authalgo",
                                       'name': "Auth. Algo."},
-                                     {'id': "hasech", 'name': "Has ECH Support?"}],
+                                     {'id': "hasech", 'name': "Supports ECH?"}],
                             data=[],
                             style_header={
                                 'backgroundColor': '#222222',
                                 'color': 'white',
                                 'textAlign': 'left',
-                                'border': '0px'
+                                #'border': '0px'
                             },
                             style_data={
                                 'backgroundColor':  '#222222',
                                                     'color': 'white',
                                 'textAlign': 'left',
-                                'border': '0px'
+                                #'border': '0px'
                             },
                             style_data_conditional=[
                                 {
@@ -254,7 +309,7 @@ app.layout = html.Div(
                         dash_table.DataTable(
                             id="insec_info",
                             columns=[
-                                {'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Found:", 'type': 'text'}],
+                                {'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Information:", 'type': 'text'}],
                             style_as_list_view=True,
                             style_header={
                                 'backgroundColor': '#222222',
@@ -349,37 +404,6 @@ app.layout = html.Div(
                                 }
                             ]
                         ),
-                        html.Br(),
-                        # Graphs
-                        # html.Div(id="size-graphs", className="row",
-                        # children=[
-                        dcc.Graph(
-                            id='size-per-artifact',
-                            responsive=True, style={
-                                # 'display': 'block'
-                                # "width":400, "margin": 0,
-                                # 'display': 'inline-block'
-                                'display': 'block'
-                            },
-                            figure=blank_figure()
-                        ),
-                        # dcc.Graph(
-                        #         id='size-per-app-data',
-                        #         responsive=True, style={
-                        #         		#"width":400, "margin": 0,
-                        # 				   #'display': 'inline-block'
-                        # 				   'display': 'block'
-                        # 		},
-                        #         figure=blank_figure()
-                        # ),
-                        # #]),
-                        #    dcc.Graph(
-                        #        id='hs-timings',
-                        #        responsive=True, style={
-                        # 			   'display': 'block'
-                        # 	},
-                        #        figure=blank_figure()
-                        #    ),
                     ],
                 ),
                 # html.Br(),
