@@ -286,7 +286,7 @@ app.layout = html.Div(
                         dash_table.DataTable(
                             id="insec_info",
                             columns=[
-                                {'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Found:", 'type': 'text'}],
+                                {'id': "insec_ciphersuites", 'name': "Insecure Ciphersuites Information:", 'type': 'text'}],
                             style_as_list_view=True,
                             style_header={
                                 'backgroundColor': '#222222',
