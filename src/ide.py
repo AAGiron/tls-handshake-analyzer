@@ -182,6 +182,29 @@ app.layout = html.Div(
                         #        figure=blank_figure()
                         #    ),
                         html.Br(),
+                        html.H6(
+                            "Statistics:"),
+                        dash_table.DataTable(
+                            id="statistics",
+                            style_as_list_view=True,
+                            columns=[{"id": "mean_size", "name": "Mean HS Size (bytes)"}, {"id": "stdev_size", "name": "STDEV HS Size (bytes)"}, {"id": "mean_time", "name": "Mean HS Time (ms)"}, {"id": "stdev_time", "name": "STDEV HS Time (ms)"}],
+                            data=[],
+                            style_header={
+                                'backgroundColor': '#222222',
+                                'color': 'white',
+                                'textAlign': 'left',
+                                #'border': '0px'
+                            },
+                            style_data={
+                                'backgroundColor':  '#222222',
+                                                    'color': 'white',
+                                'textAlign': 'left',
+                                #'border': '0px'
+                            },
+                        ),
+                        html.Br(),
+                        html.H6(
+                            "Security Information:"),
                         dash_table.DataTable(
                             id="sec_info",
                             style_as_list_view=True,
