@@ -18,7 +18,8 @@ from tlsobj.oid import nonQSKEX, nonQSAuth
 
 pcap_latest_file = None
 tlskeylog_latest_file = None
-
+enable_ciphersuite_check = False
+enable_ech = False
 
 def get_callbacks(app):
     """
@@ -45,6 +46,26 @@ def get_callbacks(app):
 
 
     """
+        Checklist callback to set user options
+    """
+    @app.callback(
+        Output("hidden-div-checklist", "children"),
+        Input("checklist", "value"),
+    )
+    def update_checklist_selection(check_values):
+        global enable_ciphersuite_check
+        global enable_ech
+        if 'cipher' in check_values:
+            enable_ciphersuite_check = True
+        else:
+            enable_ciphersuite_check = False
+        if 'ech' in check_values:
+            enable_ech = True
+        else:
+            enable_ech = False
+
+
+    """
         TLS Analyze (Start button)
     """
     @app.callback(
@@ -56,7 +77,6 @@ def get_callbacks(app):
         Output('reset-btn', 'n_clicks'),
         Input('tlsanalyze-btn', 'n_clicks'),
         Input('reset-btn', 'n_clicks'),
-        Input("checklist", "value"),
         State('sec_info', 'data'),
         State('sec_info', 'columns'),
         State('statistics', 'data'),
@@ -65,22 +85,12 @@ def get_callbacks(app):
         State('summary_tls', 'data'),        
         State('summary_tls', 'columns'),  
     )
-    def update_tables_and_figure(n_clicks, reset_click, check_values, secinfo_rows, secinfo_columns, statistics_data,
+    def update_tables_and_figure(n_clicks, reset_click, secinfo_rows, secinfo_columns, statistics_data,
                                  insecinfo_rows, insecinfo_columns,
                                  summary_rows, summary_columns):        
 
         i = 0
         fig1 = blank_figure()
-
-        enable_ciphersuite_check = False
-        enable_ech = False
-        
-        if isinstance(check_values, list):
-            if 'cipher' in check_values:
-                enable_ciphersuite_check = True
-
-            if 'ech' in check_values:
-                enable_ech = True
 
         #reset button
         if reset_click > 0 or pcap_latest_file is None:
@@ -101,9 +111,9 @@ def get_callbacks(app):
                     i = i + 1
                     # sec_info table
                     if not enable_ech:
-                        textech = "No"
+                        textech = "-"
                     else:
-                        textech = "Yes"
+                        textech = hs.chello.hasECHSupport
                     
                     textKEX = hs.serverdata.getKEXNameFromGroup()
                     if textKEX in nonQSKEX:
@@ -165,7 +175,7 @@ def get_callbacks(app):
                         text=['%.0f' % elem for elem in y]
                     ))
                     # bargroupgap=0.15, bargap=0.3, width=900)
-                    fig1.update_layout(barmode='group')
+                    fig1.update_layout(barmode='group',plot_bgcolor='rgb(34, 34, 34)', paper_bgcolor='rgb(34, 34, 34)')
                     # , range=rangeG, type="log")
                     fig1.update_yaxes(title="Size (bytes)",
                                       showline=True, linewidth=1, linecolor='black')
