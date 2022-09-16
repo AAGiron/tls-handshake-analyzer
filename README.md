@@ -47,6 +47,10 @@ The analyzer computes:
 
 The analyzer search for in-order pairs {CHello,SHello} to find TLS 1.3 handshakes and extracts sizes. Some types (e.g., resumption) are not counted. The summary results counts how many full handshakes were found and sum their sizes and time.
 
+## Cite this tool
+
+You can cite the publication (DOI: [https://doi.org/10.5753/sbseg_estendido.2022.226725](https://doi.org/10.5753/sbseg_estendido.2022.226725)), presented at SBSeg 2022. There is a also a video presentation [here](https://youtu.be/mR_wIq_7PXA).
+
 ## Known issues
 
 Some pcap files are not dealt consistently between different tshark builds; be sure to use latest versions.
